@@ -257,3 +257,34 @@ Inkonsistente Doku = später viel verlorene Zeit.
 | Kamera-Position für Breakpoint   | `index.html`        | Block ab "PerspectiveCamera" |
 | Panel-Sektionen umbenennen       | `index.html`        | `<aside class="panel">` |
 | Server-Endpoints (AR-Upload)     | `server.js`         | – |
+
+---
+
+## Update — Commit `54ccb03`+ (Mesh-Filter überarbeitet)
+
+Vorheriger Filter benutzte `nodeMatch` als naive Substring-Suche. Das
+führte zu zwei Bugs:
+
+1. **Duplikate**: bei Spider-Legs gab es zwei Mesh-Varianten in den
+   GLBs — `Konische_spider_-_WOOD_…` (Holz-Material) und
+   `Konische_Spider_…` (Metall). Substring "konische" matchte beide
+   → Doppelgänger-Beine.
+2. **Unerwünschte Co-Treffer**: `nodeMatch: "Schuin"` matchte BEIDE
+   `Schuin_-_WOOD` (klassisch) und `Schuin_25_-_WOOD` (Schuin 2.5 Voet).
+
+Neue Architektur:
+
+- **`extractLegSeg(name)`**: normalisiert einen Mesh-Namen in eine
+  vergleichbare Leg-Segment-Form (lowercase, ohne Shape-Prefix,
+  Längen-Suffix, `_-_WOOD`-Decorator, mesh-split-Indizes).
+- **`legCfg.nodeMatches`**: ist jetzt ein Array exakter Segment-Strings.
+  Das Mesh wird angezeigt, wenn `extractLegSeg(name)` einen der
+  Werte exakt trifft.
+- **Wood-Dedup**: existieren für die ausgewählte Leg Mesh-Varianten mit
+  und ohne `_-_WOOD`-Suffix, wird nur die nicht-Wood-Variante gezeigt.
+
+`catalog.json` wurde von den **realen** Mesh-Namen aller 9 Shape-GLBs
+neu aufgebaut. **40 Gestelle** (vorher 38) — die zusätzlichen sind
+`fluted`, `double_fluted`, `column_middle`, `half_spider`. Entfernt:
+`u_shape` (gab es im 3D-Material nie).
+
