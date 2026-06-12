@@ -336,3 +336,19 @@ Finish-Aufschläge: Yakisugi 150 · Deep Black 100 · Chocolate 80 · White 5% 8
 Da Shopify noch nicht verdrahtet ist, öffnet der CTA einen
 `mailto:info@zazawoods.de` mit vorausgefülltem Subject + Body
 (Form, Gestell, Länge, Finish, Preis, Deep-Link zur Konfiguration).
+
+---
+
+## Update — Commit `017e63d`+ (Finish-Chips mit Holz-Vorschau)
+
+Holzfinish-Chips zeigen jetzt einen runden **Swatch** mit der echten
+JPG-Textur aus `assets/textures/<file>` — analog zum Material-Picker im
+Picknick-Konfigurator.
+
+- Neue CSS-Variante `.chip-finish` + `.swatch` (kreisrunder
+  Hintergrund mit `background-image`).
+- `buildFinishChips()` rendert `<button class="chip chip-finish">
+  <span class="swatch" style="background-image: url(...)"></span>
+  <span>Label</span></button>`.
+- Bei `.on`-Zustand bekommt der Swatch einen 2-px-Brand-Ring per
+  `box-shadow: inset 0 0 0 2px var(--brand)`.
