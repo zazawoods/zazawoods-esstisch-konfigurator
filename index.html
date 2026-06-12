@@ -498,6 +498,7 @@ resize();
 let CATALOG = { shapes: [], legs: [], finishes: [] };
 const state = { shape: null, leg: null, length: null, finish: null };
 let currentRoot = null;
+let unitScale = 1;
 const shapeCache = {};
 const textureCache = {};
 
@@ -558,37 +559,41 @@ async function setActiveShape(key) {
 function normalizeShape(root) {
   root.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(root);
-  if (box.isEmpty()) return;
+  if (box.isEmpty()) { unitScale = 1; return; }
   const sy = box.max.y - box.min.y;
-  let s = 1;
-  if (sy > 500) s = 0.001;       // mm → m
-  else if (sy > 5) s = 0.01;     // cm → m
-  if (s !== 1) { root.scale.setScalar(s); root.updateMatrixWorld(true); }
+  if (sy > 500) unitScale = 0.001;
+  else if (sy > 5) unitScale = 0.01;
+  else unitScale = 1;
+}
+const BASE_LENGTH = 240;
+function applyScale() {
+  if (!currentRoot) return;
+  const sx = state.length ? state.length / BASE_LENGTH : 1;
+  currentRoot.scale.set(unitScale * sx, unitScale, unitScale);
+  currentRoot.updateMatrixWorld(true);
 }
 
 function applyState() {
   if (!currentRoot) return;
   const legCfg = CATALOG.legs.find(l => l.key === state.leg);
-  const lenStr = String(state.length);
   const legMatch = legCfg ? legCfg.nodeMatch.toLowerCase() : '';
   let vis = 0;
   currentRoot.traverse(o => {
     if (!o.isMesh) return;
-    if (!legCfg) { o.visible = true; vis++; return; }
     const name = (o.name || '').toLowerCase();
-    const lenTag = name.match(/_(\d{2,4})(\.\d+)?$/);
-    const tagLen = lenTag ? lenTag[1] : null;
-    const lenOk = !tagLen || tagLen === lenStr;
     const isTop = /table[_ ]?top|tabletop/.test(name);
-    o.visible = isTop ? lenOk : (name.includes(legMatch) && lenOk);
-    if (o.visible) vis++;
+    if (isTop) {
+      o.visible = true;
+      vis++;
+    } else if (legCfg) {
+      o.visible = name.includes(legMatch);
+      if (o.visible) vis++;
+    } else {
+      o.visible = true;
+      vis++;
+    }
   });
-  if (vis === 0 && legCfg) {
-    currentRoot.traverse(o => {
-      if (!o.isMesh) return;
-      o.visible = (o.name || '').toLowerCase().includes(legMatch);
-    });
-  }
+  applyScale();
   recenter();
   applyFinish();
   updateOverzicht();
@@ -714,9 +719,67 @@ function smoothZoomStep() {
 function tick() { smoothZoomStep(); controls.update(); renderer.render(scene, camera); requestAnimationFrame(tick); }
 tick();
 
+
+// ============ URL state restore (?shape=…&leg=…&length=…&finish=…) ============
+function applyUrlState() {
+  const p = new URLSearchParams(location.search);
+  if (p.has('shape')  && CATALOG.shapes.some(s => s.key === p.get('shape')))   state.shape  = p.get('shape');
+  if (p.has('leg')    && CATALOG.legs.some(l => l.key === p.get('leg')))       state.leg    = p.get('leg');
+  if (p.has('finish') && CATALOG.finishes.some(f => f.key === p.get('finish'))) state.finish = p.get('finish');
+  if (p.has('length')) {
+    const n = parseInt(p.get('length'), 10);
+    const sh = CATALOG.shapes.find(s => s.key === state.shape);
+    if (n && sh && sh.lengths.includes(n)) state.length = n;
+  }
+}
+
+// ============ Icon buttons ============
+document.getElementById('btn-save').addEventListener('click', () => {
+  const data = JSON.stringify(state, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `zazawoods-esstisch-${state.shape}-${state.leg}-${state.length}cm.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  showToast('Konfiguration gespeichert');
+});
+
+document.getElementById('btn-snd').addEventListener('click', async () => {
+  const qs = new URLSearchParams({
+    shape: state.shape, leg: state.leg, length: state.length, finish: state.finish
+  });
+  const url = location.origin + location.pathname + '?' + qs.toString();
+  try { await navigator.clipboard.writeText(url); showToast('Link in Zwischenablage kopiert'); }
+  catch (e) { prompt('Link kopieren:', url); }
+});
+
+let dimsShown = false;
+document.getElementById('btn-dims').addEventListener('click', () => {
+  dimsShown = !dimsShown;
+  if (!currentRoot) return;
+  // Compute the visible bbox in cm
+  currentRoot.updateMatrixWorld(true);
+  const box = new THREE.Box3();
+  currentRoot.traverse(o => {
+    if (!o.isMesh || !o.visible) return;
+    const cb = new THREE.Box3().setFromObject(o);
+    if (!cb.isEmpty()) box.union(cb);
+  });
+  if (box.isEmpty()) return;
+  const W = Math.round((box.max.x - box.min.x) * 100);
+  const D = Math.round((box.max.z - box.min.z) * 100);
+  const H = Math.round((box.max.y - box.min.y) * 100);
+  showToast(`${W} × ${D} × ${H} cm`, 3500);
+});
+
+document.getElementById('btn-ar').addEventListener('click', () => {
+  showToast('AR kommt im nächsten Update', 2500);
+});
+
 (async () => {
   try {
     await loadCatalog();
+    applyUrlState();
     buildShapeChips(); buildLegChips(); buildLengthChips(); buildFinishChips();
     updateOverzicht();
     await setActiveShape(state.shape);
