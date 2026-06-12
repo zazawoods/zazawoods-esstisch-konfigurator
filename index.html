@@ -576,28 +576,48 @@ function applyScale() {
 function applyState() {
   if (!currentRoot) return;
   const legCfg = CATALOG.legs.find(l => l.key === state.leg);
-  const legMatch = legCfg ? legCfg.nodeMatch.toLowerCase() : '';
-  let vis = 0;
+  const wanted = legCfg ? legCfg.nodeMatches.map(m => m.toLowerCase()) : [];
+
+  // Pass 1: tabletops always show. Collect leg candidates whose extracted
+  // seg exactly matches one of the wanted patterns. Hide everything else.
+  const legCandidates = [];
   currentRoot.traverse(o => {
     if (!o.isMesh) return;
-    const name = (o.name || '').toLowerCase();
-    const isTop = /table[_ ]?top|tabletop/.test(name);
-    if (isTop) {
-      o.visible = true;
-      vis++;
-    } else if (legCfg) {
-      o.visible = name.includes(legMatch);
-      if (o.visible) vis++;
-    } else {
-      o.visible = true;
-      vis++;
-    }
+    const rawLower = (o.name || '').toLowerCase();
+    if (/table_top|tabletop/.test(rawLower)) { o.visible = true; return; }
+    if (!legCfg) { o.visible = true; return; }
+    const seg = extractLegSeg(o.name || '');
+    if (wanted.includes(seg)) legCandidates.push(o);
+    else o.visible = false;
   });
+
+  // Pass 2: dedup wood vs metal variants of the same leg.
+  // If a non-WOOD variant exists, hide the _-_WOOD ones.
+  const hasNonWood = legCandidates.some(o => !/_-_wood/.test((o.name || '').toLowerCase()));
+  legCandidates.forEach(o => {
+    const isWood = /_-_wood/.test((o.name || '').toLowerCase());
+    o.visible = hasNonWood ? !isWood : true;
+  });
+
   applyScale();
   recenter();
   applyFinish();
   updateOverzicht();
 }
+
+// Normalise a mesh name into a leg-segment for catalog matching.
+function extractLegSeg(name) {
+  let n = (name || '').toLowerCase();
+  n = n.replace(/_\d{3,4}\d*(_\d+)?$/, '');
+  n = n.replace(/^[a-z]+_+/, '');
+  n = n.replace(/^_+/, '');
+  n = n.replace(/_-_wood$/, '');
+  n = n.replace(/_leg_rec_table_90_100_110$/, '');
+  n = n.replace(/_leg_round_table_90$/, '');
+  n = n.replace(/_\d$/, '');
+  return n;
+}
+
 
 function recenter() {
   if (!currentRoot) return;
