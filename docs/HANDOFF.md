@@ -288,3 +288,51 @@ neu aufgebaut. **40 Gestelle** (vorher 38) — die zusätzlichen sind
 `fluted`, `double_fluted`, `column_middle`, `half_spider`. Entfernt:
 `u_shape` (gab es im 3D-Material nie).
 
+
+---
+
+## Update — Commit `fa03ecf`+ (Preis & CTA wieder eingebaut)
+
+Panel-Foot wurde 1:1 vom Picknick-Konfigurator übernommen:
+**ÜBERSICHT** (2 Zeilen Zusammenfassung) → **total-row** mit
+"Gesamtbetrag: (inkl. kostenlose Lieferung)" + Euro-Wert →
+**CTA-Button** "Anfrage senden".
+
+### Preis-Formel
+
+```
+price = shape.basePrice
+      + (state.length - 200) × shape.pricePerCm
+      + leg.surcharge?
+      + finish.surcharge?
+```
+
+- `shape.basePrice` und `shape.pricePerCm` sind PFLICHT in `catalog.json`
+- `leg.surcharge` und `finish.surcharge` sind OPTIONAL
+- Baseline-Länge: 200 cm
+
+Aktuelle Werte (alle in EUR, Platzhalter — vom Kunden tunen lassen):
+
+| Form         | base | /cm |
+|--------------|------|-----|
+| rectangle    | 1200 | 5.0 |
+| oval         | 1300 | 5.0 |
+| danishOval   | 1400 | 5.5 |
+| verbaan      | 1300 | 5.0 |
+| boogvorm     | 1500 | 6.0 |
+| halfrond     | 1350 | 5.5 |
+| kiezel       | 1500 | 6.0 |
+| organic      | 1700 | 7.0 |
+| round        | 1100 | 8.0 |
+
+Leg-Aufschläge: Spider 200 · Halb-Spider 150 · Hapa 300 · Base 400 ·
+Walrus 200 · Pillars 250 · Pilaar 200 · Matrix 250 · Butterfly 150 ·
+Kolom Plus 200 · Kolom Rod 200 · Kolom Oval 250 · Fluted 350 · Double Fluted 450
+
+Finish-Aufschläge: Yakisugi 150 · Deep Black 100 · Chocolate 80 · White 5% 80
+
+### CTA-Button "Anfrage senden"
+
+Da Shopify noch nicht verdrahtet ist, öffnet der CTA einen
+`mailto:info@zazawoods.de` mit vorausgefülltem Subject + Body
+(Form, Gestell, Länge, Finish, Preis, Deep-Link zur Konfiguration).

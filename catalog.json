@@ -1,71 +1,530 @@
 {
   "shapes": [
-    { "key": "rectangle",   "name": "Rechteck",        "file": "rectangle.glb",   "lengths": [180,200,220,240,260,280,300,350,400] },
-    { "key": "oval",        "name": "Oval",            "file": "Oval.glb",        "lengths": [180,200,220,240,260,280,300,350,400] },
-    { "key": "danishOval",  "name": "Dänisch-Oval",    "file": "DanishOval.glb",  "lengths": [180,200,220,240,260,280,300,350,400] },
-    { "key": "verbaan",     "name": "Verbaan",         "file": "Verbaan.glb",     "lengths": [180,200,220,240,260,280,300,350,400] },
-    { "key": "boogvorm",    "name": "Bootsform",       "file": "Boogvorm.glb",    "lengths": [180,200,220,240,260,280,300,350,400] },
-    { "key": "halfrond",    "name": "Halbkreis",       "file": "Halfrond.glb",    "lengths": [180,200,220,240,260,280,300,350,400] },
-    { "key": "kiezel",      "name": "Kieselstein",     "file": "Kiezel.glb",      "lengths": [180,200,220,240,260,280,300,350,400] },
-    { "key": "organic",     "name": "Organic",         "file": "Organic.glb",     "lengths": [180,200,220,240,260,280] },
-    { "key": "round",       "name": "Rund",            "file": "Round.glb",       "lengths": [100,120,140,160] }
+    {
+      "key": "rectangle",
+      "name": "Rechteck",
+      "file": "rectangle.glb",
+      "lengths": [
+        180,
+        200,
+        220,
+        240,
+        260,
+        280,
+        300,
+        350,
+        400
+      ],
+      "basePrice": 1200,
+      "pricePerCm": 5.0
+    },
+    {
+      "key": "oval",
+      "name": "Oval",
+      "file": "Oval.glb",
+      "lengths": [
+        180,
+        200,
+        220,
+        240,
+        260,
+        280,
+        300,
+        350,
+        400
+      ],
+      "basePrice": 1300,
+      "pricePerCm": 5.0
+    },
+    {
+      "key": "danishOval",
+      "name": "Dänisch-Oval",
+      "file": "DanishOval.glb",
+      "lengths": [
+        180,
+        200,
+        220,
+        240,
+        260,
+        280,
+        300,
+        350,
+        400
+      ],
+      "basePrice": 1400,
+      "pricePerCm": 5.5
+    },
+    {
+      "key": "verbaan",
+      "name": "Verbaan",
+      "file": "Verbaan.glb",
+      "lengths": [
+        180,
+        200,
+        220,
+        240,
+        260,
+        280,
+        300,
+        350,
+        400
+      ],
+      "basePrice": 1300,
+      "pricePerCm": 5.0
+    },
+    {
+      "key": "boogvorm",
+      "name": "Bootsform",
+      "file": "Boogvorm.glb",
+      "lengths": [
+        180,
+        200,
+        220,
+        240,
+        260,
+        280,
+        300,
+        350,
+        400
+      ],
+      "basePrice": 1500,
+      "pricePerCm": 6.0
+    },
+    {
+      "key": "halfrond",
+      "name": "Halbkreis",
+      "file": "Halfrond.glb",
+      "lengths": [
+        180,
+        200,
+        220,
+        240,
+        260,
+        280,
+        300,
+        350,
+        400
+      ],
+      "basePrice": 1350,
+      "pricePerCm": 5.5
+    },
+    {
+      "key": "kiezel",
+      "name": "Kieselstein",
+      "file": "Kiezel.glb",
+      "lengths": [
+        180,
+        200,
+        220,
+        240,
+        260,
+        280,
+        300,
+        350,
+        400
+      ],
+      "basePrice": 1500,
+      "pricePerCm": 6.0
+    },
+    {
+      "key": "organic",
+      "name": "Organic",
+      "file": "Organic.glb",
+      "lengths": [
+        180,
+        200,
+        220,
+        240,
+        260,
+        280
+      ],
+      "basePrice": 1700,
+      "pricePerCm": 7.0
+    },
+    {
+      "key": "round",
+      "name": "Rund",
+      "file": "Round.glb",
+      "lengths": [
+        100,
+        120,
+        140,
+        160
+      ],
+      "basePrice": 1100,
+      "pricePerCm": 8.0
+    }
   ],
   "legs": [
-    { "key": "x_modern",      "name": "X Modern",          "nodeMatches": ["x_modern"] },
-    { "key": "x_shape",       "name": "X-Form",            "nodeMatches": ["x_shape"] },
-    { "key": "v_shape",       "name": "V-Form",            "nodeMatches": ["v_shape"] },
-    { "key": "a_shape",       "name": "A-Form",            "nodeMatches": ["a_shape"] },
-    { "key": "butterfly",     "name": "Schmetterling",     "nodeMatches": ["butterfly"] },
-    { "key": "konische_spider", "name": "Konischer Spider", "nodeMatches": ["konische_spider"] },
-    { "key": "half_spider",   "name": "Halb-Spider",       "nodeMatches": ["half_spider"] },
-    { "key": "conisch",       "name": "Konisch",           "nodeMatches": ["conisch"] },
-    { "key": "blok",          "name": "Blok",              "nodeMatches": ["blok"] },
-    { "key": "base",          "name": "Base",              "nodeMatches": ["base"] },
-    { "key": "hapa",          "name": "Hapa",              "nodeMatches": ["hapa"] },
-    { "key": "matrix",        "name": "Matrix",            "nodeMatches": ["matrix"] },
-    { "key": "diagonal_pole", "name": "Diagonal Pole",     "nodeMatches": ["diagonal_pole"] },
-    { "key": "column_middle", "name": "Säule mittig",      "nodeMatches": ["column_in_middle"] },
-    { "key": "pilaar",        "name": "Pilaar",            "nodeMatches": ["pilaar"] },
-    { "key": "pillars",       "name": "Pillars",           "nodeMatches": ["pillars"] },
-    { "key": "klassiek",      "name": "Klassiek Midden",   "nodeMatches": ["klassiek_midden"] },
-    { "key": "schuin",        "name": "Schuin",            "nodeMatches": ["schuin"] },
-    { "key": "schuin25",      "name": "Schuin 2.5",        "nodeMatches": ["schuin_25"] },
-    { "key": "thore",         "name": "Thore",             "nodeMatches": ["thore"] },
-    { "key": "triple",        "name": "Triple",            "nodeMatches": ["triple"] },
-    { "key": "walrus",        "name": "Walrus",            "nodeMatches": ["walrus"] },
-    { "key": "stative",       "name": "Stative",           "nodeMatches": ["stative"] },
-    { "key": "vn",            "name": "VN",                "nodeMatches": ["vn_tafelpoot"] },
-    { "key": "flat_v",        "name": "Flat Dining V",     "nodeMatches": ["flat_dining_v"] },
-    { "key": "flach_stahl",   "name": "Flach Stahl",       "nodeMatches": ["flach_stahl"] },
-    { "key": "hairpin",       "name": "Hairpin",           "nodeMatches": ["hairpin"] },
-    { "key": "demi_lune",     "name": "Demi Lune",         "nodeMatches": ["demi_lune"] },
-    { "key": "gerond",        "name": "Gerond",            "nodeMatches": ["gerond"] },
-    { "key": "cris_cross",    "name": "Criss Cross",       "nodeMatches": ["criss_cross"] },
-    { "key": "halve_plus",    "name": "Halve Plus",        "nodeMatches": ["halve_plus"] },
-    { "key": "tapse_spin",    "name": "Tapse Spin",        "nodeMatches": ["tapse_spin"] },
-    { "key": "twist",         "name": "Twist Rond",        "nodeMatches": ["twist_tafelpoot"] },
-    { "key": "vierpoot",      "name": "Vierpoot",          "nodeMatches": ["vierpoot"] },
-    { "key": "kolom_oval",    "name": "Kolom Oval",        "nodeMatches": ["kolom_oval"] },
-    { "key": "kolom_plus",    "name": "Kolom Plus",        "nodeMatches": ["kolom_plus"] },
-    { "key": "kolom_rod",     "name": "Kolom Rod",         "nodeMatches": ["kolom_rod"] },
-    { "key": "fluted",        "name": "Fluted",            "nodeMatches": ["fluted"] },
-    { "key": "double_fluted", "name": "Double Fluted",     "nodeMatches": ["double_fluted"] },
-    { "key": "4legs_pole",    "name": "4 Beine auf Säule", "nodeMatches": ["4_legs_on_pole"] }
+    {
+      "key": "x_modern",
+      "name": "X Modern",
+      "nodeMatches": [
+        "x_modern"
+      ]
+    },
+    {
+      "key": "x_shape",
+      "name": "X-Form",
+      "nodeMatches": [
+        "x_shape"
+      ]
+    },
+    {
+      "key": "v_shape",
+      "name": "V-Form",
+      "nodeMatches": [
+        "v_shape"
+      ]
+    },
+    {
+      "key": "a_shape",
+      "name": "A-Form",
+      "nodeMatches": [
+        "a_shape"
+      ]
+    },
+    {
+      "key": "butterfly",
+      "name": "Schmetterling",
+      "nodeMatches": [
+        "butterfly"
+      ],
+      "surcharge": 150
+    },
+    {
+      "key": "konische_spider",
+      "name": "Konischer Spider",
+      "nodeMatches": [
+        "konische_spider"
+      ],
+      "surcharge": 200
+    },
+    {
+      "key": "half_spider",
+      "name": "Halb-Spider",
+      "nodeMatches": [
+        "half_spider"
+      ],
+      "surcharge": 150
+    },
+    {
+      "key": "conisch",
+      "name": "Konisch",
+      "nodeMatches": [
+        "conisch"
+      ]
+    },
+    {
+      "key": "blok",
+      "name": "Blok",
+      "nodeMatches": [
+        "blok"
+      ]
+    },
+    {
+      "key": "base",
+      "name": "Base",
+      "nodeMatches": [
+        "base"
+      ],
+      "surcharge": 400
+    },
+    {
+      "key": "hapa",
+      "name": "Hapa",
+      "nodeMatches": [
+        "hapa"
+      ],
+      "surcharge": 300
+    },
+    {
+      "key": "matrix",
+      "name": "Matrix",
+      "nodeMatches": [
+        "matrix"
+      ],
+      "surcharge": 250
+    },
+    {
+      "key": "diagonal_pole",
+      "name": "Diagonal Pole",
+      "nodeMatches": [
+        "diagonal_pole"
+      ]
+    },
+    {
+      "key": "column_middle",
+      "name": "Säule mittig",
+      "nodeMatches": [
+        "column_in_middle"
+      ]
+    },
+    {
+      "key": "pilaar",
+      "name": "Pilaar",
+      "nodeMatches": [
+        "pilaar"
+      ],
+      "surcharge": 200
+    },
+    {
+      "key": "pillars",
+      "name": "Pillars",
+      "nodeMatches": [
+        "pillars"
+      ],
+      "surcharge": 250
+    },
+    {
+      "key": "klassiek",
+      "name": "Klassiek Midden",
+      "nodeMatches": [
+        "klassiek_midden"
+      ]
+    },
+    {
+      "key": "schuin",
+      "name": "Schuin",
+      "nodeMatches": [
+        "schuin"
+      ]
+    },
+    {
+      "key": "schuin25",
+      "name": "Schuin 2.5",
+      "nodeMatches": [
+        "schuin_25"
+      ]
+    },
+    {
+      "key": "thore",
+      "name": "Thore",
+      "nodeMatches": [
+        "thore"
+      ]
+    },
+    {
+      "key": "triple",
+      "name": "Triple",
+      "nodeMatches": [
+        "triple"
+      ]
+    },
+    {
+      "key": "walrus",
+      "name": "Walrus",
+      "nodeMatches": [
+        "walrus"
+      ],
+      "surcharge": 200
+    },
+    {
+      "key": "stative",
+      "name": "Stative",
+      "nodeMatches": [
+        "stative"
+      ]
+    },
+    {
+      "key": "vn",
+      "name": "VN",
+      "nodeMatches": [
+        "vn_tafelpoot"
+      ]
+    },
+    {
+      "key": "flat_v",
+      "name": "Flat Dining V",
+      "nodeMatches": [
+        "flat_dining_v"
+      ]
+    },
+    {
+      "key": "flach_stahl",
+      "name": "Flach Stahl",
+      "nodeMatches": [
+        "flach_stahl"
+      ]
+    },
+    {
+      "key": "hairpin",
+      "name": "Hairpin",
+      "nodeMatches": [
+        "hairpin"
+      ]
+    },
+    {
+      "key": "demi_lune",
+      "name": "Demi Lune",
+      "nodeMatches": [
+        "demi_lune"
+      ]
+    },
+    {
+      "key": "gerond",
+      "name": "Gerond",
+      "nodeMatches": [
+        "gerond"
+      ]
+    },
+    {
+      "key": "cris_cross",
+      "name": "Criss Cross",
+      "nodeMatches": [
+        "criss_cross"
+      ]
+    },
+    {
+      "key": "halve_plus",
+      "name": "Halve Plus",
+      "nodeMatches": [
+        "halve_plus"
+      ]
+    },
+    {
+      "key": "tapse_spin",
+      "name": "Tapse Spin",
+      "nodeMatches": [
+        "tapse_spin"
+      ]
+    },
+    {
+      "key": "twist",
+      "name": "Twist Rond",
+      "nodeMatches": [
+        "twist_tafelpoot"
+      ]
+    },
+    {
+      "key": "vierpoot",
+      "name": "Vierpoot",
+      "nodeMatches": [
+        "vierpoot"
+      ]
+    },
+    {
+      "key": "kolom_oval",
+      "name": "Kolom Oval",
+      "nodeMatches": [
+        "kolom_oval"
+      ],
+      "surcharge": 250
+    },
+    {
+      "key": "kolom_plus",
+      "name": "Kolom Plus",
+      "nodeMatches": [
+        "kolom_plus"
+      ],
+      "surcharge": 200
+    },
+    {
+      "key": "kolom_rod",
+      "name": "Kolom Rod",
+      "nodeMatches": [
+        "kolom_rod"
+      ],
+      "surcharge": 200
+    },
+    {
+      "key": "fluted",
+      "name": "Fluted",
+      "nodeMatches": [
+        "fluted"
+      ],
+      "surcharge": 350
+    },
+    {
+      "key": "double_fluted",
+      "name": "Double Fluted",
+      "nodeMatches": [
+        "double_fluted"
+      ],
+      "surcharge": 450
+    },
+    {
+      "key": "4legs_pole",
+      "name": "4 Beine auf Säule",
+      "nodeMatches": [
+        "4_legs_on_pole"
+      ]
+    }
   ],
   "finishes": [
-    { "key": "natural",      "name": "Natural Eiche",     "file": "1_OIL_PLUS_2C_OAK_NATURAL.jpg" },
-    { "key": "cocoa",        "name": "Cocoa",             "file": "2_OIL_PLUS_2C_OAK_COCOA.jpg" },
-    { "key": "mist5",        "name": "Mist 5%",           "file": "3_OIL_PLUS_2C_OAK_MIST_5.jpg" },
-    { "key": "vanilla",      "name": "Vanilla",           "file": "4_OIL_PLUS_2C_OAK_VANILLA.jpg" },
-    { "key": "pure",         "name": "Pure",              "file": "5_OIL_PLUS_2C_OAK_PURE - Copy.jpg" },
-    { "key": "golden_hour",  "name": "Golden Hour",       "file": "6_OIL_PLUS_2C_OAK_GOLDEN_HOUR.jpg" },
-    { "key": "macchiato",    "name": "Macchiato",         "file": "7_OIL_PLUS_2C_OAK_MACCHIATO.jpg" },
-    { "key": "shell_grey",   "name": "Shell Grey",        "file": "8_OIL_PLUS_2C_OAK_SHELL_GREY.jpg" },
-    { "key": "walnut",       "name": "Walnuss",           "file": "9_OIL_PLUS_2C_OAK_WALNUT.jpg" },
-    { "key": "charcoal",     "name": "Charcoal",          "file": "10_OIL_PLUS_2C_OAK_CHARCOAL.jpg" },
-    { "key": "chocolate",    "name": "Chocolate",         "file": "Chocolate.jpg" },
-    { "key": "deep_black",   "name": "Deep Black",        "file": "Deep Black.jpg" },
-    { "key": "white5",       "name": "White 5%",          "file": "White 5.jpg" },
-    { "key": "yakisugi",     "name": "Yakisugi",          "file": "Yakisugi.jpg" }
+    {
+      "key": "natural",
+      "name": "Natural Eiche",
+      "file": "1_OIL_PLUS_2C_OAK_NATURAL.jpg"
+    },
+    {
+      "key": "cocoa",
+      "name": "Cocoa",
+      "file": "2_OIL_PLUS_2C_OAK_COCOA.jpg"
+    },
+    {
+      "key": "mist5",
+      "name": "Mist 5%",
+      "file": "3_OIL_PLUS_2C_OAK_MIST_5.jpg"
+    },
+    {
+      "key": "vanilla",
+      "name": "Vanilla",
+      "file": "4_OIL_PLUS_2C_OAK_VANILLA.jpg"
+    },
+    {
+      "key": "pure",
+      "name": "Pure",
+      "file": "5_OIL_PLUS_2C_OAK_PURE - Copy.jpg"
+    },
+    {
+      "key": "golden_hour",
+      "name": "Golden Hour",
+      "file": "6_OIL_PLUS_2C_OAK_GOLDEN_HOUR.jpg"
+    },
+    {
+      "key": "macchiato",
+      "name": "Macchiato",
+      "file": "7_OIL_PLUS_2C_OAK_MACCHIATO.jpg"
+    },
+    {
+      "key": "shell_grey",
+      "name": "Shell Grey",
+      "file": "8_OIL_PLUS_2C_OAK_SHELL_GREY.jpg"
+    },
+    {
+      "key": "walnut",
+      "name": "Walnuss",
+      "file": "9_OIL_PLUS_2C_OAK_WALNUT.jpg"
+    },
+    {
+      "key": "charcoal",
+      "name": "Charcoal",
+      "file": "10_OIL_PLUS_2C_OAK_CHARCOAL.jpg"
+    },
+    {
+      "key": "chocolate",
+      "name": "Chocolate",
+      "file": "Chocolate.jpg",
+      "surcharge": 80
+    },
+    {
+      "key": "deep_black",
+      "name": "Deep Black",
+      "file": "Deep Black.jpg",
+      "surcharge": 100
+    },
+    {
+      "key": "white5",
+      "name": "White 5%",
+      "file": "White 5.jpg",
+      "surcharge": 80
+    },
+    {
+      "key": "yakisugi",
+      "name": "Yakisugi",
+      "file": "Yakisugi.jpg",
+      "surcharge": 150
+    }
   ]
 }

@@ -398,6 +398,13 @@
         <div class="overzicht-l1" id="ov-l1">–</div>
         <div class="overzicht-l2" id="ov-l2">–</div>
       </div>
+      <div class="total-row">
+        <span class="lbl">Gesamtbetrag: <span class="lbl-sub">(inkl. kostenlose Lieferung)</span></span>
+        <span class="val" id="price">€ –</span>
+      </div>
+      <button class="cta" id="cta">
+        <span>Anfrage senden</span>
+      </button>
     </div>
   </aside>
 </div>
@@ -668,6 +675,25 @@ async function applyFinish() {
   });
 }
 
+function computePrice() {
+  const s = CATALOG.shapes.find(x => x.key === state.shape);
+  const l = CATALOG.legs.find(x => x.key === state.leg);
+  const f = CATALOG.finishes.find(x => x.key === state.finish);
+  if (!s || !state.length) return null;
+  const baseLen = 200;
+  const lenDelta = state.length - baseLen;
+  const base = (s.basePrice || 1200);
+  const perCm = (s.pricePerCm || 5);
+  const legAdd = (l && l.surcharge) || 0;
+  const finishAdd = (f && f.surcharge) || 0;
+  return Math.round(base + lenDelta * perCm + legAdd + finishAdd);
+}
+function formatPrice(n) {
+  if (n == null) return '€ –';
+  // German thousands separator (dot)
+  return '€ ' + n.toLocaleString('de-DE');
+}
+
 function updateOverzicht() {
   const s = CATALOG.shapes.find(x => x.key === state.shape);
   const l = CATALOG.legs.find(x => x.key === state.leg);
@@ -678,6 +704,8 @@ function updateOverzicht() {
   document.getElementById('sub-leg').textContent = l ? l.name : '–';
   document.getElementById('sub-length').textContent = state.length ? state.length + ' cm' : '–';
   document.getElementById('sub-finish').textContent = f ? f.name : '–';
+  const priceEl = document.getElementById('price');
+  if (priceEl) priceEl.textContent = formatPrice(computePrice());
 }
 
 function chip(label, isOn, onClick) {
@@ -808,6 +836,22 @@ document.getElementById('btn-ar').addEventListener('click', () => {
     showToast('Konfigurator konnte nicht geladen werden', 5000);
   }
 })();
+
+
+const ctaBtn = document.getElementById('cta');
+if (ctaBtn) ctaBtn.addEventListener('click', () => {
+  const subject = encodeURIComponent('Esstisch-Konfiguration: ' + (CATALOG.shapes.find(x => x.key === state.shape)?.name || ''));
+  const body = encodeURIComponent(
+    'Form: ' + (CATALOG.shapes.find(x => x.key === state.shape)?.name || '–') + '\n' +
+    'Gestell: ' + (CATALOG.legs.find(x => x.key === state.leg)?.name || '–') + '\n' +
+    'Länge: ' + (state.length || '–') + ' cm\n' +
+    'Holzfinish: ' + (CATALOG.finishes.find(x => x.key === state.finish)?.name || '–') + '\n' +
+    'Preis: ' + formatPrice(computePrice()) + '\n\n' +
+    'Konfiguration ansehen: ' + location.origin + location.pathname + '?' +
+      new URLSearchParams({ shape: state.shape, leg: state.leg, length: state.length, finish: state.finish }).toString()
+  );
+  location.href = 'mailto:info@zazawoods.de?subject=' + subject + '&body=' + body;
+});
 
 document.querySelectorAll('.acc-head').forEach(h => {
   h.addEventListener('click', () => h.parentElement.classList.toggle('open'));
