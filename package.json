@@ -1,0 +1,12 @@
+{
+  "name": "zazawoods-esstisch-konfigurator",
+  "version": "1.0.0",
+  "description": "3D-Konfigurator f\u00fcr Esstische auf zazawoods.de",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

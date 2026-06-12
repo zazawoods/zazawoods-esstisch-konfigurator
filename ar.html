@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AR – Zaza Woods</title>
+<style>
+  body { font-family: 'Inter', -apple-system, "Segoe UI", Arial, sans-serif; background: #F7F6F3; color: #1A1A1A;
+    margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; }
+  .ic { width: 48px; height: 48px; color: #C8965A; margin-bottom: 16px; }
+  .ic svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.5; }
+  h1 { font-size: 18px; margin: 0 0 6px; }
+  p { font-size: 14px; color: #6B6B6B; margin: 0 0 20px; }
+  a.btn { padding: 14px 28px; background: #C8965A; color: #fff; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 15px; }
+</style>
+</head>
+<body>
+  <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+  <h1 id="msg">AR wird geöffnet …</h1>
+  <p id="sub">Einen Moment bitte</p>
+  <a id="arl" class="btn" style="display:none">In AR öffnen</a>
+<script>
+  // Only accept URLs that are an absolute path on this same origin
+  // OR an absolute URL pointing back to this same origin. This blocks
+  // ?u=javascript:... and any cross-origin redirect via the QR/link.
+  function safeUrl(s) {
+    if (!s) return null;
+    try {
+      var url = new URL(s, location.origin);
+      if (url.origin !== location.origin) return null;
+      if (url.pathname.indexOf('/ar/') !== 0) return null;   // must be a model from /ar/
+      return url.toString();
+    } catch (e) { return null; }
+  }
+  var q = new URLSearchParams(location.search);
+  var u = safeUrl(q.get('u')), g = safeUrl(q.get('g'));
+  var ua = navigator.userAgent;
+  var isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var isAndroid = /Android/.test(ua);
+  // Only Chrome on Android supports intent:// URLs.
+  // Samsung Internet, Firefox, Edge, Opera → must use direct https Scene Viewer URL.
+  var isChromeAndroid = isAndroid && /Chrome/.test(ua) && !/SamsungBrowser|EdgA|FxiOS|OPR|Edge\//.test(ua);
+
+  function sceneViewerUrl(glb) {
+    var enc = encodeURIComponent(glb);
+    var httpsFallback =
+      'https://arvr.google.com/scene-viewer/1.0?file=' + enc +
+      '&mode=ar_preferred&resizable=false&title=Zaza%20Woods';
+    if (isChromeAndroid) {
+      return 'intent://arvr.google.com/scene-viewer/1.0?file=' + enc +
+        '&mode=ar_preferred&resizable=false&title=Zaza%20Woods' +
+        '#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;' +
+        'S.browser_fallback_url=' + encodeURIComponent(httpsFallback) + ';end;';
+    }
+    return httpsFallback;
+  }
+
+  var target = null;
+  if (isIOS && u)         target = u;                  // iPhone/iPad → USDZ → AR Quick Look
+  else if (g)             target = sceneViewerUrl(g);  // any Android browser → Scene Viewer
+  else if (u)             target = u;
+
+  if (target) {
+    var a = document.getElementById('arl');
+    // For AR Quick Look on iOS Safari, the anchor MUST have rel="ar" AND an
+    // <img> child — otherwise Safari just shows the raw .usdz bytes.
+    if (isIOS) {
+      a.setAttribute('rel', 'ar');
+      // tiny invisible 1×1 GIF — required by Quick Look
+      a.innerHTML = '<img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">In AR öffnen';
+    }
+    a.href = target;
+    a.style.display = 'inline-block';
+    // auto-click the anchor (NOT location.href — that bypasses rel="ar")
+    setTimeout(function () { try { a.click(); } catch (e) {} }, 250);
+    document.getElementById('sub').textContent = 'Falls sich nichts öffnet, tippe auf den Button.';
+  } else {
+    document.getElementById('msg').textContent = 'Kein Modell angegeben.';
+    document.getElementById('sub').textContent = '';
+  }
+</script>
+</body>
+</html>

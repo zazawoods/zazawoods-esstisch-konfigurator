@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zaza Woods – AR-Dateien Generator</title>
+<style>
+  body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; background: #F7F6F3; color: #1A1A1A; padding: 28px; line-height: 1.5; }
+  h1 { font-size: 20px; margin-bottom: 6px; }
+  p { font-size: 14px; color: #555; margin-bottom: 16px; max-width: 640px; }
+  button { padding: 12px 22px; border: none; border-radius: 10px; background: #C8965A; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  #log { margin-top: 18px; font-size: 12.5px; font-family: ui-monospace, monospace; white-space: pre-wrap; background: #fff; border: 1px solid #E8E6E1; border-radius: 10px; padding: 12px; height: 360px; overflow-y: auto; }
+  .bar { height: 8px; background: #E8E6E1; border-radius: 4px; margin: 14px 0; overflow: hidden; max-width: 640px; }
+  .bar > i { display: block; height: 100%; width: 0; background: #C8965A; transition: width .2s; }
+</style>
+</head>
+<body>
+<h1>AR-Dateien Generator</h1>
+<p>Erzeugt für jede Konfiguration eine GLB- (Android) und USDZ-Datei (iPhone) und packt alles in ein ZIP.
+Klicke auf „Alle erzeugen", warte bis fertig, lade das ZIP herunter und lege den Inhalt in den Ordner <b>ar/</b> des Projekts.</p>
+<button id="gen">Alle erzeugen</button>
+<button id="genone" style="background:#888;">Nur 1 testen</button>
+<div class="bar"><i id="prog"></i></div>
+<div id="log"></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { USDZExporter } from 'three/addons/exporters/USDZExporter.js';
+import JSZip from 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm';
+
+const logEl = document.getElementById('log');
+const prog = document.getElementById('prog');
+const log = m => { logEl.textContent += m + '\n'; logEl.scrollTop = logEl.scrollHeight; };
+
+// ---- Catalog (mirrors the configurator) ----
+const W_LEN = [160,180,200,220,240,260,280,300,350,400];
+const W_GLB_LENGTHS = [160,200,250,300,350,400];
+const PL_LEN = [160,180,200,220,240,260,280,300,350,400];
+const renderLForW = L => W_GLB_LENGTHS.reduce((b,g)=>Math.abs(L-g)<Math.abs(L-b)?g:b, W_GLB_LENGTHS[0]);
+
+const PICKNICK_LEG_NODES = {
+  groups: ['Xmodern','Aframe','butterfly','diagonalpole','Ushape','Xshape'],
+  tablePrefix: 'Table_legs_', bench2Prefix: 'benchlegs2_3planks_',
+  bench1: { Xmodern:'benchlgs_3planks_Xmodern', Aframe:'benchlegs1_3planks_Aframe', butterfly:'benchlegs1_3planks_butterfly', diagonalpole:'benchlegs1_3planks_diagonalpole', Ushape:'benchlegs1_3planks_Ushape', Xshape:'benchlegs1_3planks_Xshape' }
+};
+
+// Build the full config list
+function allConfigs() {
+  const list = [];
+  W_LEN.forEach(L => [0,1,2].forEach(b => list.push({ key:`W_${L}_b${b}`, set:'angle', length:L, count:b })));
+  PL_LEN.forEach(L => [0,1,2].forEach(s => list.push({ key:`U_${L}_s${s}`, set:'Ushape', length:L, count:s })));
+  PL_LEN.forEach(L => [0,1,2].forEach(s => list.push({ key:`X_${L}_s${s}`, set:'Xshape', length:L, count:s })));
+  return list;
+}
+
+const draco = new DRACOLoader();
+draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/');
+const loader = new GLTFLoader();
+loader.setDRACOLoader(draco);
+
+function loadGLB(url) {
+  return new Promise((res, rej) => loader.load(url, g => res(g.scene), undefined, rej));
+}
+
+// Downscale every texture in a scene to <=512 once (keeps export files small)
+function downscaleTextures(root, max = 256) {
+  const seen = new Set();
+  root.traverse(o => {
+    if (!o.isMesh) return;
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    mats.forEach(m => {
+      if (!m) return;
+      ['map','roughnessMap','normalMap','metalnessMap'].forEach(k => {
+        const t = m[k];
+        if (!t || !t.image || seen.has(t)) return;
+        const iw = t.image.width, ih = t.image.height;
+        if (!iw || (iw <= max && ih <= max)) { seen.add(t); return; }
+        const s = max / Math.max(iw, ih);
+        const c = document.createElement('canvas');
+        c.width = Math.round(iw * s); c.height = Math.round(ih * s);
+        c.getContext('2d').drawImage(t.image, 0, 0, c.width, c.height);
+        t.image = c; t.needsUpdate = true; seen.add(t);
+      });
+    });
+  });
+}
+
+// Keep only triangles whose centroid X is on one side of midX
+function halveGeometryX(geo, midX, keepGreater) {
+  const g = geo.index ? geo.toNonIndexed() : geo.clone();
+  const pos = g.attributes.position;
+  const keepTris = [];
+  for (let i = 0; i < pos.count; i += 3) {
+    const cx = (pos.getX(i) + pos.getX(i+1) + pos.getX(i+2)) / 3;
+    if (keepGreater ? cx >= midX : cx < midX) keepTris.push(i);
+  }
+  const attrs = {};
+  for (const name in g.attributes) attrs[name] = g.attributes[name];
+  const out = new THREE.BufferGeometry();
+  for (const name in attrs) {
+    const src = attrs[name], itemSize = src.itemSize;
+    const arr = new Float32Array(keepTris.length * 3 * itemSize);
+    let w = 0;
+    keepTris.forEach(i => {
+      for (let v = 0; v < 3; v++) for (let c = 0; c < itemSize; c++) arr[w++] = src.getComponent(i + v, c);
+    });
+    out.setAttribute(name, new THREE.BufferAttribute(arr, itemSize));
+  }
+  out.computeVertexNormals();
+  return out;
+}
+
+// Build a flat export group for one config from a loaded source scene
+function buildConfig(src, cfg) {
+  src.updateMatrixWorld(true);
+  const isW = cfg.set === 'angle';
+  const renderL = isW ? renderLForW(cfg.length) : cfg.length;
+  const scaleZ = cfg.length / renderL;
+
+  // Visibility pass on the source
+  src.traverse(o => { o.visible = true; });
+  src.traverse(o => {
+    if (!o.name) return;
+    const m = o.name.match(/_(\d{3,4})$/);
+    if (m) o.visible = parseInt(m[1],10) === renderL;
+  });
+  if (!isW) {
+    const sel = cfg.set, N = PICKNICK_LEG_NODES, map = {};
+    N.groups.forEach(g => { map[N.tablePrefix+g]=g; map[N.bench2Prefix+g]=g; map[N.bench1[g]]=g; });
+    src.traverse(o => { if (o.name && map[o.name] !== undefined) o.visible = map[o.name] === sel; });
+    src.traverse(o => {
+      if (!o.name) return;
+      const n = o.name.toLowerCase();
+      const b1 = n === '3benchplanks_1' || n.startsWith('benchlegs1_3planks') || n.startsWith('benchlgs_3planks');
+      const b2 = n === '3benchplanks_2' || n.startsWith('benchlegs2_3planks');
+      if (b1 && cfg.count < 1) o.visible = false;
+      if (b2 && cfg.count < 2) o.visible = false;
+    });
+  }
+
+  // Flatten visible meshes — bake EVERYTHING into geometry so every output
+  // mesh has identity transform. This is the only way to make Scene Viewer
+  // AND iOS Quick Look consistently anchor the model to the detected floor.
+  const grp = new THREE.Group();
+  const backrestMeshes = [];
+  src.updateMatrixWorld(true);
+  src.traverse(o => {
+    if (!o.isMesh) return;
+    let p = o, ok = true, isBack = false;
+    while (p) { if (!p.visible) { ok = false; break; } if (p.name && /^Backrest_W_/i.test(p.name)) isBack = true; p = p.parent; }
+    if (!ok) return;
+    if (isW && isBack && cfg.count === 0) return; // no backrest
+    // Bake world matrix into cloned geometry; mesh stays at identity.
+    const geo = o.geometry.clone();
+    geo.applyMatrix4(o.matrixWorld);
+    const mesh = new THREE.Mesh(geo, o.material);
+    mesh.userData.isBack = isW && isBack;
+    grp.add(mesh);
+    if (mesh.userData.isBack) backrestMeshes.push(mesh);
+  });
+
+  // W with exactly 1 backrest → keep half the backrest geometry
+  if (isW && cfg.count === 1 && backrestMeshes.length) {
+    const box = new THREE.Box3();
+    backrestMeshes.forEach(m => box.expandByObject(m));
+    const midX = (box.min.x + box.max.x) / 2;
+    backrestMeshes.forEach(m => { m.geometry = halveGeometryX(m.geometry, midX, true); });
+  }
+
+  // Bake length stretch into the geometries (NOT into grp.scale) so the
+  // output GLB has identity transforms throughout.
+  if (scaleZ !== 1) {
+    const stretch = new THREE.Matrix4().makeScale(1, 1, scaleZ);
+    grp.children.forEach(m => { if (m.geometry) m.geometry.applyMatrix4(stretch); });
+  }
+
+  // Final pass: bake "bottom at Y=0 / centre at X=Z=0" into the geometries.
+  // Every AR engine reliably anchors to a model whose bbox bottom = Y=0.
+  const finalBox = new THREE.Box3().setFromObject(grp);
+  if (!finalBox.isEmpty()) {
+    const c = finalBox.getCenter(new THREE.Vector3());
+    const shift = new THREE.Matrix4().makeTranslation(-c.x, -finalBox.min.y, -c.z);
+    grp.children.forEach(m => { if (m.geometry) m.geometry.applyMatrix4(shift); });
+  }
+  return grp;
+}
+
+async function exportConfig(src, cfg) {
+  const grp = buildConfig(src, cfg);
+  const glb = await new GLTFExporter().parseAsync(grp, { binary: true });
+  const usdz = await new USDZExporter().parse(grp, { maxTextureSize: 256, quality: 0.7 });
+  return { glb, usdz };
+}
+
+let sources = null;
+async function ensureSources() {
+  if (sources) return sources;
+  log('Lade angle.glb …');
+  const angle = await loadGLB('angle.glb');
+  log('Lade picknick.glb …');
+  const pick = await loadGLB('picknick.glb');
+  downscaleTextures(angle); downscaleTextures(pick);
+  log('Texturen verkleinert.');
+  sources = { angle, pick };
+  return sources;
+}
+const srcFor = cfg => cfg.set === 'angle' ? sources.angle : sources.pick;
+
+document.getElementById('genone').addEventListener('click', async () => {
+  try {
+    await ensureSources();
+    const cfg = { key:'W_300_b1', set:'angle', length:300, count:1 };
+    log('Test: ' + cfg.key);
+    const { glb, usdz } = await exportConfig(srcFor(cfg), cfg);
+    log(`  GLB ${(glb.byteLength/1024).toFixed(0)} KB · USDZ ${((usdz.byteLength||usdz.length)/1024).toFixed(0)} KB`);
+    log('OK – Test bestanden.');
+  } catch (e) { log('FEHLER: ' + (e.message || e)); }
+});
+
+document.getElementById('gen').addEventListener('click', async () => {
+  const btn = document.getElementById('gen'); btn.disabled = true;
+  try {
+    await ensureSources();
+    const cfgs = allConfigs();
+    const zip = new JSZip();
+    let totBytes = 0;
+    for (let i = 0; i < cfgs.length; i++) {
+      const cfg = cfgs[i];
+      const { glb, usdz } = await exportConfig(srcFor(cfg), cfg);
+      zip.file('ar/' + cfg.key + '.glb', glb);
+      zip.file('ar/' + cfg.key + '.usdz', usdz.buffer || usdz);
+      totBytes += glb.byteLength + (usdz.byteLength || usdz.length);
+      prog.style.width = ((i+1)/cfgs.length*100) + '%';
+      log(`${i+1}/${cfgs.length}  ${cfg.key}`);
+      await new Promise(r => setTimeout(r, 0));
+    }
+    log(`Packe ZIP … (~${(totBytes/1048576).toFixed(0)} MB)`);
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'zazawoods-ar.zip';
+    a.click();
+    log('Fertig! ZIP heruntergeladen.');
+  } catch (e) { log('FEHLER: ' + (e.message || e)); }
+  btn.disabled = false;
+});
+</script>
+</body>
+</html>
