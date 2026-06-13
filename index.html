@@ -929,6 +929,18 @@ if (ctaBtn) ctaBtn.addEventListener('click', () => {
   location.href = 'mailto:info@zazawoods.de?subject=' + subject + '&body=' + body;
 });
 
+
+// Debug: expose internals so we can inspect from devtools / browser tests
+window.__zw = {
+  get scene() { return scene; },
+  get currentRoot() { return currentRoot; },
+  get camera() { return camera; },
+  get controls() { return controls; },
+  get state() { return state; },
+  get textureCache() { return textureCache; },
+  get shapeCache() { return shapeCache; }
+};
+
 document.querySelectorAll('.acc-head').forEach(h => {
   h.addEventListener('click', () => h.parentElement.classList.toggle('open'));
 });
