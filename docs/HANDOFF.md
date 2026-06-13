@@ -470,3 +470,17 @@ Labels verwenden die bogade-Markennamen.
 ### CSS
 - Neue Variante `.chip-with-icon` mit `.ic`-span (38×30 PNG-Hintergrund,
   background-size:contain). Wird für Form- und Gestell-Chips verwendet.
+
+---
+
+## Update — Commit `137209f`+ (Vertikale Tile-Chips à la bogade)
+
+Form- und Gestell-Chips sind jetzt **vertikale Kacheln** mit der Icon
+oben und dem Label darunter — Pixel-Match zu bogade:
+
+- Chip: 82×64 px, flex-direction: column
+- Icon: 48×30 px (background-image, contain)
+- Gap: 3 px
+- Padding: 8/4/6
+- Font: 12 px, line-height 1.15, text-align center
+- Container: flex-wrap mit 6 px Gap → automatisches Grid je nach Panel-Breite

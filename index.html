@@ -352,12 +352,29 @@
   /* Make the finish grid display larger items so swatches are visible */
   #finish-chips { gap: 8px; }
 
-  /* Chips with PNG swatch (bogade-style shape & leg icons) */
-  .chip-with-icon { padding: 4px 14px 4px 4px; gap: 10px; display: inline-flex; align-items: center; }
+  /* Tile-style chips with icon ABOVE label — pixel-matched to bogade */
+  .chip-with-icon {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 3px;
+    padding: 8px 4px 6px;
+    width: 82px;
+    min-height: 64px;
+    background: #FFF;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.15;
+    text-align: center;
+  }
   .chip-with-icon .ic {
-    width: 38px; height: 30px;
+    width: 48px; height: 30px;
     background-size: contain; background-repeat: no-repeat; background-position: center;
     flex: none;
+  }
+  /* Container should wrap the tiles into a multi-column grid */
+  #shape-chips, #leg-chips {
+    display: flex; flex-wrap: wrap; gap: 6px;
   }
 </style>
 </head>
