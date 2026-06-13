@@ -515,6 +515,30 @@ new ResizeObserver(resize).observe(canvas);
 resize();
 
 let CATALOG = { shapes: [], legs: [], finishes: [] };
+
+// Generate planar (top-down XZ projection) UVs for any mesh that lacks them.
+// Without UVs THREE can't map a texture onto the mesh at all — the tabletops
+// in our GLBs are exported without UVs, so the wood texture would just not
+// show. Called once per loaded shape.
+function ensurePlanarUVs(root) {
+  root.traverse(o => {
+    if (!o.isMesh || !o.geometry) return;
+    if (o.geometry.attributes.uv) return; // already has UVs
+    const pos = o.geometry.attributes.position;
+    if (!pos) return;
+    o.geometry.computeBoundingBox();
+    const b = o.geometry.boundingBox;
+    const sx = Math.max(b.max.x - b.min.x, 0.0001);
+    const sz = Math.max(b.max.z - b.min.z, 0.0001);
+    const uv = new Float32Array(pos.count * 2);
+    for (let i = 0; i < pos.count; i++) {
+      uv[i*2]     = (pos.getX(i) - b.min.x) / sx;
+      uv[i*2 + 1] = (pos.getZ(i) - b.min.z) / sz;
+    }
+    o.geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  });
+}
+
 const state = { shape: null, leg: null, length: null, finish: null };
 let currentRoot = null;
 let unitScale = 1;
@@ -572,6 +596,7 @@ async function setActiveShape(key) {
   currentRoot = root;
   scene.add(currentRoot);
   normalizeShape(currentRoot);
+  ensurePlanarUVs(currentRoot);
   applyState();
 }
 
@@ -676,12 +701,35 @@ async function applyFinish() {
   if (!tex) return;
   currentRoot.traverse(o => {
     if (!o.isMesh || !o.visible || !o.material) return;
+    const rawLower = (o.name || '').toLowerCase();
+    const isTop = /table_top|tabletop/.test(rawLower);
     const mats = Array.isArray(o.material) ? o.material : [o.material];
     mats.forEach(m => {
-      const woody = m.map || (m.color && m.color.r > 0.3 && m.color.g > 0.2 && m.color.b > 0.15);
+      // Decide whether this material represents WOOD.
+      // Tabletops are ALWAYS wood. Legs: use color/map heuristic to skip pure metal.
+      const matNameLower = (m.name || '').toLowerCase();
+      const looksMetal = /metal|steel|stahl|chrom|iron/.test(matNameLower);
+      const woody = isTop || ((!looksMetal) && (m.map || (m.color && m.color.r > 0.3 && m.color.g > 0.2 && m.color.b > 0.15)));
       if (!woody) return;
-      m.map = tex;
+      // Use a per-material cloned texture so we can set repeat independently.
+      // Aim for ~1 wood-grain tile per metre — looks natural on a table.
+      const t = tex.clone();
+      t.needsUpdate = true;
+      o.geometry.computeBoundingBox();
+      const b = o.geometry.boundingBox;
+      const sx = Math.max(b.max.x - b.min.x, 0.001);
+      const sz = Math.max(b.max.z - b.min.z, 0.001);
+      // The world scale of the mesh hierarchy is unitScale * length-scale.
+      // bounding box is in local coords; multiply to estimate world span.
+      const worldScaleX = (currentRoot.scale.x || 1);
+      const worldScaleZ = (currentRoot.scale.z || 1);
+      const tilesU = Math.max(1, sx * worldScaleX);
+      const tilesV = Math.max(1, sz * worldScaleZ);
+      t.repeat.set(tilesU, tilesV);
+      m.map = t;
       m.color = new THREE.Color(0xffffff);
+      m.metalness = 0;
+      m.roughness = 0.7;
       m.needsUpdate = true;
     });
   });

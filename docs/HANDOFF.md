@@ -352,3 +352,38 @@ Picknick-Konfigurator.
   <span>Label</span></button>`.
 - Bei `.on`-Zustand bekommt der Swatch einen 2-px-Brand-Ring per
   `box-shadow: inset 0 0 0 2px var(--brand)`.
+
+---
+
+## Update — Commit `5c41eba`+ (Holzfinish auf Tischplatte tatsächlich sichtbar)
+
+Vorher waren Tischplatten visuell grau — die GLBs der Tischplatten
+exportieren KEINE UV-Koordinaten (`uvCount = 0`). Ohne UVs kann
+Three.js eine Textur überhaupt nicht auf die Geometrie projizieren,
+also blieb das Material grau, egal welcher Finish gewählt war.
+
+Fix in zwei Teilen:
+
+1. **`ensurePlanarUVs(root)`** — wird einmal pro geladenes Shape-GLB
+   in `setActiveShape()` aufgerufen. Iteriert alle Meshes; wenn UV
+   fehlt, generiert eine planare XZ-Top-Down-Projektion über die
+   lokale Bounding-Box. Wood-Texturen werden so von oben auf die
+   Tischplatte projiziert — wie es ein Hobler in der Werkstatt machen
+   würde.
+
+2. **`applyFinish()`** überarbeitet:
+   - **Tischplatten werden IMMER als Holz behandelt** (Bypass der
+     Color-Heuristik), Namen-Match `/table_top|tabletop/`.
+   - **Material-Name-Blacklist**: enthält der Material-Name `metal`,
+     `steel`, `stahl`, `chrom` oder `iron`, wird die Textur nicht
+     angewandt (verhindert versehentliches "Holz auf Stahl-Spider").
+   - **Per-Mesh-geklontes Texture-Objekt** (`tex.clone()`) damit
+     `tex.repeat` individuell gesetzt werden kann. Wir zielen auf
+     ~1 Holzmaserung-Kachel pro Meter → realistisches Aussehen statt
+     stark gestreckter Maserung.
+   - **`metalness = 0`, `roughness = 0.7`** wird zwangsgesetzt, damit
+     Tischplatten nicht aussehen wie poliertes Metall.
+
+Folge: ALLE Tischplatten zeigen jetzt die gewählte Holzfinish-Textur,
+die Maserung wird realistisch gekachelt, der gewählte Finish ist
+unmittelbar im Vorschau-3D-Modell sichtbar.
