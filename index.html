@@ -558,30 +558,23 @@ let CATALOG = { shapes: [], legs: [], finishes: [] };
 // then runs along the LENGTH axis (X) on every face it sensibly can.
 function ensurePlanarUVs(root) {
   const _v = new THREE.Vector3();
-  const _n = new THREE.Vector3();
-  const _nm = new THREE.Matrix3();
   root.updateMatrixWorld(true);
   root.traverse(o => {
     if (!o.isMesh || !o.geometry) return;
     if (o.geometry.attributes.uv) return;
     const pos = o.geometry.attributes.position;
     if (!pos) return;
-    if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals();
-    const nor = o.geometry.attributes.normal;
     const matWorld = o.matrixWorld;
-    _nm.getNormalMatrix(matWorld);
     const uv = new Float32Array(pos.count * 2);
+    // Simple planar XZ projection in WORLD space.
+    // Top + bottom faces of a flat tabletop look perfect (grain along X = length
+    // after the 90° rotation in applyFinish). Edges share the same projection,
+    // so they show a stretched-but-consistent grain — no UV seams, no "direction
+    // jumps". This is the same approach bogade uses.
     for (let i = 0; i < pos.count; i++) {
       _v.fromBufferAttribute(pos, i).applyMatrix4(matWorld);
-      _n.fromBufferAttribute(nor, i).applyMatrix3(_nm).normalize();
-      const x = _v.x, y = _v.y, z = _v.z;
-      const nx = Math.abs(_n.x), ny = Math.abs(_n.y), nz = Math.abs(_n.z);
-      let u, v;
-      if (ny >= nx && ny >= nz) { u = x; v = z; }
-      else if (nz >= nx)        { u = x; v = y; }
-      else                       { u = z; v = y; }
-      uv[i*2]     = u;
-      uv[i*2 + 1] = v;
+      uv[i*2]     = _v.x;
+      uv[i*2 + 1] = _v.z;
     }
     o.geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   });

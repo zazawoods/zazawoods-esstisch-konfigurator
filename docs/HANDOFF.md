@@ -615,3 +615,21 @@ justify-content: center !important;
 ```
 Plus `> span:last-child { display: block; width: 100%; text-align: center; }`
 damit das Label zentriert unter dem Icon sitzt, nicht rechtsbündig.
+
+---
+
+## Update — Commit `6e9a7f0`+ (Rückkehr zu einfacher planarer XZ-Projektion)
+
+User-Bericht: Holzmaserung sieht "in verschiedene Richtungen zugleich"
+aus. Das war die Folge der per-Vertex-Achsenwahl im
+face-aware-UV-Code: auf der Grenze zwischen Top-Fläche und Kante
+bekamen benachbarte Vertices unterschiedliche UV-Achsen, was sichtbare
+Nähte und Maserung-Richtungswechsel auf der Hauptfläche erzeugte.
+
+Lösung: Rückkehr zu **simpler planarer XZ-Projektion** im Welt-Raum.
+- Vorteil: keine UV-Nähte, keine Richtungswechsel auf der Tischplatte.
+- Nachteil: Kanten werden gestreckt — aber wie bei bogade und überall
+  sonst in der Branche akzeptiert man das.
+
+Damit ist die Top- und Unterseite jeder Tischplatte konsistent und die
+Maserung läuft sauber entlang der Länge (X-Achse).
