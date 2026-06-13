@@ -784,3 +784,42 @@ bei ~36 MB statt ~135 MB.
 — werden derzeit nicht vom Konfigurator geladen, also nicht
 performance-relevant. Können in einer späteren Iteration ebenfalls
 komprimiert werden.
+
+---
+
+## Update — Commit `7e26b3b`+ (Schatten sichtbar + alle Icon-Buttons verdrahtet)
+
+### Schatten
+
+Vorher Delta zwischen "unter dem Tisch" und "fern auf dem Boden" war
+nur **3** (statistisch nicht sichtbar). Jetzt **15** — klar erkennbar.
+
+Was geändert wurde:
+- `AmbientLight`: 0.45 → **0.32** (zu hell wäscht Schatten aus)
+- `DirectionalLight`: 0.9 → **1.15** intensity
+- `shadow.camera` ortho box: ±4 m → **±3 m** (höhere Map-Auflösung)
+- `shadow.bias`: -0.0005 → **-0.0003** (weniger Light-Bleed)
+- `shadow.radius = 4` (weiche PCF-Kanten)
+- Lichtposition leicht versetzt auf (3.5, 7, 2.5) für besseren Wurfwinkel
+
+### Icon-Buttons
+
+| Button | Verhalten |
+|---|---|
+| **Save** | Kopiert Share-URL in Zwischenablage (war: JSON-Download) |
+| **Share** | Kopiert Share-URL (gleich wie Save jetzt) |
+| **Dimensions** | Toast "L × B × H cm" anhand der echten BBox der sichtbaren Meshes |
+| **AR** | Platzhalter-Toast "AR kommt im nächsten Update" (echte Wiring ist Folge-Iteration) |
+
+### Was noch fehlt
+
+- **AR-Funktion** real verdrahten — `buildExportScene()` aus Picknick
+  übernehmen, USDZ/GLB-Export + Upload, anchor-click pattern für iOS
+- **Wizard-Onboarding** (4-Schritte Anleitung beim ersten Aufruf) —
+  CSS/HTML vom Picknick übernehmen
+- **Shopify-embed-section** (`konfigurator-embed.liquid`) für Esstisch
+  schreiben — analog zum Picknick mit `set/length/leg/finish` URL-Pass-Through
+- **Echte Mobile-Tests** — Tooling kann keinen iPhone-Viewport
+  emulieren; manuelles Testen empfohlen
+- **AR-Texturen** auf der kurzen Stirnseite (end-grain) — derzeit nur
+  gestreckte side-grain. Ohne End-Grain-Texturkachel nicht möglich.
