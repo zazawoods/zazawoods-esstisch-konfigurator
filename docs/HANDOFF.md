@@ -577,3 +577,41 @@ ins Szene-Graph injizieren.
 - `_leg(_rec_table|_round_table)?(_\d{2,3})+$` (war: nur exakt `_leg_rec_table_90_100_110`)
 
 Hairpin wird damit auf jedem Shape korrekt erkannt.
+
+---
+
+## Update — Commit `2d0c4ec`+ (UVs in Welt-Koord. + Chip-Layout zentriert)
+
+### Textur verschwunden → world-space UVs
+
+Die letzte UV-Generation benutzte LOKALE Vertex-Koordinaten. Der
+Künstler hat die Geometrie in Zentimeter-Einheiten gespeichert, also
+landeten u/v im Bereich 0–240. Mit `tex.repeat = (1, 1)` ergibt das
+240 Wiederholungen auf 2.4 m → GPU-Mipmap fasst alles zu einem
+flachen Braun zusammen → "Plastik"-Optik kommt zurück.
+
+**Fix:** UV wird jetzt aus der **Welt-Position** des Vertex berechnet:
+
+```js
+_v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+_n.fromBufferAttribute(nor, i).applyMatrix3(normalMatrix).normalize();
+```
+
+Damit sind die UV-Koordinaten direkt in Metern. `tex.repeat = (1,1)`
+gibt eine Maserung-Kachel pro Meter, was realistisch aussieht.
+
+### Chip-Layout zentriert
+Die Basis-`.chip`-Klasse setzt `display: inline-flex` mit
+`flex-direction: row`. Mein `.chip-with-icon` hatte zwar
+`flex-direction: column`, aber kein `display: flex` — also griff die
+Cascade-Reihenfolge nicht. Resultat: Icon links, Label rechts.
+
+Fix: explizit
+```css
+display: inline-flex !important;
+flex-direction: column !important;
+align-items: center !important;
+justify-content: center !important;
+```
+Plus `> span:last-child { display: block; width: 100%; text-align: center; }`
+damit das Label zentriert unter dem Icon sitzt, nicht rechtsbündig.

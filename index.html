@@ -354,10 +354,11 @@
 
   /* Tile-style chips with icon ABOVE label — pixel-matched to bogade */
   .chip-with-icon {
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 3px;
+    display: inline-flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px;
     padding: 8px 4px 6px;
     width: 82px;
     min-height: 64px;
@@ -365,6 +366,12 @@
     border-radius: 8px;
     font-size: 12px;
     line-height: 1.15;
+    text-align: center;
+    box-sizing: border-box;
+  }
+  .chip-with-icon > span:last-child {
+    display: block;
+    width: 100%;
     text-align: center;
   }
   .chip-with-icon .ic {
@@ -552,28 +559,27 @@ let CATALOG = { shapes: [], legs: [], finishes: [] };
 function ensurePlanarUVs(root) {
   const _v = new THREE.Vector3();
   const _n = new THREE.Vector3();
+  const _nm = new THREE.Matrix3();
+  root.updateMatrixWorld(true);
   root.traverse(o => {
     if (!o.isMesh || !o.geometry) return;
-    if (o.geometry.attributes.uv) return; // already has UVs
+    if (o.geometry.attributes.uv) return;
     const pos = o.geometry.attributes.position;
     if (!pos) return;
     if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals();
     const nor = o.geometry.attributes.normal;
+    const matWorld = o.matrixWorld;
+    _nm.getNormalMatrix(matWorld);
     const uv = new Float32Array(pos.count * 2);
     for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
-      const nx = Math.abs(nor.getX(i)), ny = Math.abs(nor.getY(i)), nz = Math.abs(nor.getZ(i));
+      _v.fromBufferAttribute(pos, i).applyMatrix4(matWorld);
+      _n.fromBufferAttribute(nor, i).applyMatrix3(_nm).normalize();
+      const x = _v.x, y = _v.y, z = _v.z;
+      const nx = Math.abs(_n.x), ny = Math.abs(_n.y), nz = Math.abs(_n.z);
       let u, v;
-      if (ny >= nx && ny >= nz) {
-        // top / bottom face — use XZ
-        u = x; v = z;
-      } else if (nz >= nx) {
-        // long edge (face normal mostly along Z) — use XY → grain along X
-        u = x; v = y;
-      } else {
-        // short edge (face normal mostly along X) — use ZY (X is constant here)
-        u = z; v = y;
-      }
+      if (ny >= nx && ny >= nz) { u = x; v = z; }
+      else if (nz >= nx)        { u = x; v = y; }
+      else                       { u = z; v = y; }
       uv[i*2]     = u;
       uv[i*2 + 1] = v;
     }
