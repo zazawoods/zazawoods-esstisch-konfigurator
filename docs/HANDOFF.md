@@ -665,3 +665,43 @@ Implementierung in `ensurePlanarUVs`:
 Vertex-Verdopplung an Kantenstössen erhöht die Vertex-Zahl je nach
 Geometrie ca. 2–3× — bei unseren 200k-Triangle GLBs ist das immer
 noch unter 1 M Vertices, problemlos.
+
+---
+
+## Update — Commit `9cfe172`+ (Alle Formen rendern + Schatten an)
+
+### Oval/Boogvorm/Halfrond/… liefen "unsichtbar"
+
+Inspektion zeigte: Oval.glb hat ALREADY UVs vom Künstler (0–1
+normalisiert), während Rectangle.glb keine hat. Mein `ensurePlanarUVs`
+übersprang Meshes mit existierenden UVs ("if (uv) return"). Resultat:
+- Rectangle: meine planare XZ-UV in Welt-Metern → tex.repeat=1
+  → 1 Holzkachel pro Meter → sichtbar.
+- Oval & co.: Künstler-UV im Bereich 0–1 → tex.repeat=1 → eine ganze
+  Textur über die ganze Tischplatte → GPU-Mipmap zeigt einen einzelnen
+  durchschnittlichen Braunton (Plastik-Look).
+
+Fix: `ensurePlanarUVs` ÜBERSCHREIBT jetzt UVs auf Tischplatten
+(Mesh-Name enthält `table_top` oder `tabletop`), unabhängig davon ob die
+GLB welche mitbringt. Bei Nicht-Tischplatten bleibt die Künstler-UV
+(Beine kriegen ohnehin keine Textur).
+
+### Schatten
+
+Schatten waren nie aktiv. Jetzt:
+
+```js
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+dir.castShadow = true;
+dir.shadow.mapSize.set(2048, 2048);
+dir.shadow.camera.near = 0.5;  far = 20;
+dir.shadow.camera.left/right/top/bottom = ±4;  // ortho box around the table
+dir.shadow.bias = -0.0005;
+dir.shadow.normalBias = 0.02;
+```
+
+Plus `setActiveShape()` setzt nach dem Load auf jedem Mesh
+`castShadow = true; receiveShadow = true`. Die Boden-Disc hatte schon
+`receiveShadow = true`.

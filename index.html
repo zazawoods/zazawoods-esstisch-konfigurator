@@ -472,6 +472,8 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 const canvas = document.getElementById('canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
@@ -489,6 +491,16 @@ scene.add(ground);
 scene.add(new THREE.AmbientLight(0xffffff, 0.45));
 const dir = new THREE.DirectionalLight(0xffffff, 0.9);
 dir.position.set(4, 8, 3);
+dir.castShadow = true;
+dir.shadow.mapSize.set(2048, 2048);
+dir.shadow.camera.near = 0.5;
+dir.shadow.camera.far  = 20;
+dir.shadow.camera.left  = -4;
+dir.shadow.camera.right =  4;
+dir.shadow.camera.top   =  4;
+dir.shadow.camera.bottom = -4;
+dir.shadow.bias = -0.0005;
+dir.shadow.normalBias = 0.02;
 scene.add(dir);
 
 const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
@@ -566,41 +578,30 @@ function ensurePlanarUVs(root) {
   root.updateMatrixWorld(true);
   root.traverse(o => {
     if (!o.isMesh || !o.geometry) return;
-    if (o.geometry.attributes.uv) return;
-    // Need non-indexed geometry so neighbouring triangles can have INDEPENDENT
-    // UVs (vertex duplication at face boundaries). This is what avoids the
-    // "grain jumps direction" seam problem of per-vertex UV picking.
+    const isTop = /table_top|tabletop/i.test(o.name || '');
+    // FORCE re-UV on tabletops: artist UV (when present in some shape files
+    // like Oval.glb) is normalized 0–1, which clashes with our world-units
+    // tex.repeat=1 model and collapses the texture into a single mip-averaged
+    // colour. For non-tabletops (legs etc.) we keep artist UV — they ignore
+    // the map anyway after applyFinish strips it.
+    if (!isTop && o.geometry.attributes.uv) return;
     let geom = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry;
     const pos = geom.attributes.position;
     if (!pos || pos.count % 3 !== 0) return;
     const matWorld = o.matrixWorld;
     const uv = new Float32Array(pos.count * 2);
-    // Process per triangle
     for (let t = 0; t < pos.count; t += 3) {
       _v0.fromBufferAttribute(pos, t  ).applyMatrix4(matWorld);
       _v1.fromBufferAttribute(pos, t+1).applyMatrix4(matWorld);
       _v2.fromBufferAttribute(pos, t+2).applyMatrix4(matWorld);
-      // Geometric normal of the triangle (in world space)
       _e1.subVectors(_v1, _v0);
       _e2.subVectors(_v2, _v0);
       _n.crossVectors(_e1, _e2).normalize();
-      const nx = Math.abs(_n.x);
-      const ny = Math.abs(_n.y);
-      const nz = Math.abs(_n.z);
-      // Choose UV axes so that mesh-U is always the table-length-X axis
-      // wherever physically possible (top, bottom, long edges).
+      const nx = Math.abs(_n.x), ny = Math.abs(_n.y), nz = Math.abs(_n.z);
       let pickU, pickV;
-      if (ny >= nx && ny >= nz) {
-        // Top / bottom (Y-normal): UV = (X, Z) → grain along X = length
-        pickU = v => v.x; pickV = v => v.z;
-      } else if (nz >= nx) {
-        // Long edge (Z-normal): UV = (X, Y) → grain along X = length
-        pickU = v => v.x; pickV = v => v.y;
-      } else {
-        // Short edge (X-normal): UV = (Z, Y) → grain runs along Z
-        // (across width — physically can't run along length on this face).
-        pickU = v => v.z; pickV = v => v.y;
-      }
+      if (ny >= nx && ny >= nz) { pickU = v => v.x; pickV = v => v.z; }
+      else if (nz >= nx)        { pickU = v => v.x; pickV = v => v.y; }
+      else                       { pickU = v => v.z; pickV = v => v.y; }
       uv[t*2]       = pickU(_v0); uv[t*2 + 1]     = pickV(_v0);
       uv[(t+1)*2]   = pickU(_v1); uv[(t+1)*2 + 1] = pickV(_v1);
       uv[(t+2)*2]   = pickU(_v2); uv[(t+2)*2 + 1] = pickV(_v2);
@@ -668,6 +669,11 @@ async function setActiveShape(key) {
   scene.add(currentRoot);
   normalizeShape(currentRoot);
   ensurePlanarUVs(currentRoot);
+  // Enable shadow casting on every mesh so the table casts a real shadow
+  // onto the ground disc.
+  currentRoot.traverse(o => {
+    if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; }
+  });
   applyState();
 }
 
