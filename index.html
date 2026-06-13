@@ -351,6 +351,14 @@
   .chip-finish.on .swatch { box-shadow: 0 0 0 2px var(--brand,#577476); }
   /* Make the finish grid display larger items so swatches are visible */
   #finish-chips { gap: 8px; }
+
+  /* Chips with PNG swatch (bogade-style shape & leg icons) */
+  .chip-with-icon { padding: 4px 14px 4px 4px; gap: 10px; display: inline-flex; align-items: center; }
+  .chip-with-icon .ic {
+    width: 38px; height: 30px;
+    background-size: contain; background-repeat: no-repeat; background-position: center;
+    flex: none;
+  }
 </style>
 </head>
 <body>
@@ -784,22 +792,50 @@ function chip(label, isOn, onClick) {
 }
 function buildShapeChips() {
   const g = document.getElementById('shape-chips'); g.innerHTML = '';
-  CATALOG.shapes.forEach(s => g.appendChild(chip(s.name, state.shape === s.key, async () => {
-    if (state.shape === s.key) return;
-    state.shape = s.key;
-    if (!s.lengths.includes(state.length)) state.length = pickDefaultLength(s);
-    buildLengthChips(); buildShapeChips();
-    await setActiveShape(s.key);
-  })));
+  CATALOG.shapes.forEach(s => {
+    const el = document.createElement('button');
+    el.className = 'chip chip-with-icon' + (state.shape === s.key ? ' on' : '');
+    el.type = 'button';
+    if (s.icon) {
+      const ic = document.createElement('span');
+      ic.className = 'ic';
+      ic.style.backgroundImage = `url("assets/icons/shapes/${encodeURI(s.icon)}")`;
+      el.appendChild(ic);
+    }
+    const lbl = document.createElement('span'); lbl.textContent = s.name;
+    el.appendChild(lbl);
+    el.addEventListener('click', async () => {
+      if (state.shape === s.key) return;
+      state.shape = s.key;
+      if (!s.lengths.includes(state.length)) state.length = pickDefaultLength(s);
+      buildLengthChips(); buildShapeChips();
+      await setActiveShape(s.key);
+    });
+    g.appendChild(el);
+  });
 }
 function buildLegChips() {
   const g = document.getElementById('leg-chips'); g.innerHTML = '';
-  CATALOG.legs.forEach(l => g.appendChild(chip(l.name, state.leg === l.key, () => {
-    if (state.leg === l.key) return;
-    state.leg = l.key;
-    buildLegChips();
-    applyState();
-  })));
+  CATALOG.legs.forEach(l => {
+    const el = document.createElement('button');
+    el.className = 'chip chip-with-icon' + (state.leg === l.key ? ' on' : '');
+    el.type = 'button';
+    if (l.icon) {
+      const ic = document.createElement('span');
+      ic.className = 'ic';
+      ic.style.backgroundImage = `url("assets/icons/legs/${encodeURI(l.icon)}")`;
+      el.appendChild(ic);
+    }
+    const lbl = document.createElement('span'); lbl.textContent = l.name;
+    el.appendChild(lbl);
+    el.addEventListener('click', () => {
+      if (state.leg === l.key) return;
+      state.leg = l.key;
+      buildLegChips();
+      applyState();
+    });
+    g.appendChild(el);
+  });
 }
 function buildLengthChips() {
   const g = document.getElementById('length-chips'); g.innerHTML = '';

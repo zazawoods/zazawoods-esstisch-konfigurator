@@ -18,7 +18,8 @@
       "basePrice": 1200,
       "pricePerCm": 5.0,
       "width": 100,
-      "height": 76
+      "height": 76,
+      "icon": "Rechthoekig.png"
     },
     {
       "key": "oval",
@@ -38,7 +39,8 @@
       "basePrice": 1300,
       "pricePerCm": 5.0,
       "width": 100,
-      "height": 76
+      "height": 76,
+      "icon": "Ovaal.png"
     },
     {
       "key": "danishOval",
@@ -58,11 +60,12 @@
       "basePrice": 1400,
       "pricePerCm": 5.5,
       "width": 100,
-      "height": 76
+      "height": 76,
+      "icon": "Deens_ovaal.png"
     },
     {
       "key": "verbaan",
-      "name": "Verbaan",
+      "name": "Schweizer Kante",
       "file": "Verbaan.glb",
       "lengths": [
         180,
@@ -78,7 +81,8 @@
       "basePrice": 1300,
       "pricePerCm": 5.0,
       "width": 100,
-      "height": 76
+      "height": 76,
+      "icon": "Rechthoekig.png"
     },
     {
       "key": "boogvorm",
@@ -98,7 +102,8 @@
       "basePrice": 1500,
       "pricePerCm": 6.0,
       "width": 110,
-      "height": 76
+      "height": 76,
+      "icon": "Boogvormig.png"
     },
     {
       "key": "halfrond",
@@ -118,11 +123,12 @@
       "basePrice": 1350,
       "pricePerCm": 5.5,
       "width": 100,
-      "height": 76
+      "height": 76,
+      "icon": "Halfrond.png"
     },
     {
       "key": "kiezel",
-      "name": "Kieselstein",
+      "name": "Kiesel",
       "file": "Kiezel.glb",
       "lengths": [
         180,
@@ -138,11 +144,12 @@
       "basePrice": 1500,
       "pricePerCm": 6.0,
       "width": 110,
-      "height": 76
+      "height": 76,
+      "icon": "Kiezel.png"
     },
     {
       "key": "organic",
-      "name": "Organic",
+      "name": "Organisch",
       "file": "Organic.glb",
       "lengths": [
         180,
@@ -155,7 +162,8 @@
       "basePrice": 1700,
       "pricePerCm": 7.0,
       "width": 100,
-      "height": 76
+      "height": 76,
+      "icon": "Organisch.png"
     },
     {
       "key": "round",
@@ -170,75 +178,85 @@
       "basePrice": 1100,
       "pricePerCm": 8.0,
       "width": 100,
-      "height": 76
+      "height": 76,
+      "icon": "Rond.png"
     }
   ],
   "legs": [
     {
       "key": "x_modern",
-      "name": "X Modern",
+      "name": "Ekso",
       "nodeMatches": [
         "x_modern"
-      ]
+      ],
+      "icon": "X_modern.png"
     },
     {
       "key": "x_shape",
-      "name": "X-Form",
+      "name": "X-vorm",
       "nodeMatches": [
         "x_shape"
-      ]
+      ],
+      "icon": "X_modern.png"
     },
     {
       "key": "v_shape",
-      "name": "V-Form",
+      "name": "V-vorm",
       "nodeMatches": [
         "v_shape"
-      ]
+      ],
+      "icon": "V_shape.png"
     },
     {
       "key": "a_shape",
-      "name": "A-Form",
+      "name": "A-vorm",
       "nodeMatches": [
         "a_shape"
-      ]
+      ],
+      "icon": "A_shape.png"
     },
     {
       "key": "butterfly",
-      "name": "Schmetterling",
+      "name": "Butterfly",
       "nodeMatches": [
         "butterfly"
       ],
-      "surcharge": 150
+      "surcharge": 150,
+      "icon": "Butterfly.png"
     },
     {
       "key": "konische_spider",
-      "name": "Konischer Spider",
+      "name": "Konische Spider",
       "nodeMatches": [
         "konische_spider"
       ],
-      "surcharge": 200
+      "surcharge": 200,
+      "icon": "Konische_Spider.png"
     },
     {
       "key": "half_spider",
-      "name": "Halb-Spider",
+      "name": "Lara",
       "nodeMatches": [
         "half_spider"
       ],
-      "surcharge": 150
+      "surcharge": 150,
+      "icon": "Half_spider_metal.png"
     },
     {
       "key": "conisch",
-      "name": "Konisch",
+      "name": "Cona",
       "nodeMatches": [
         "conisch"
-      ]
+      ],
+      "icon": "Conisch.png"
     },
     {
       "key": "blok",
       "name": "Blok",
       "nodeMatches": [
         "blok"
-      ]
+      ],
+      "icon": "Blok.png"
     },
     {
       "key": "base",
@@ -246,7 +264,8 @@
       "nodeMatches": [
         "base"
       ],
-      "surcharge": 400
+      "surcharge": 400,
+      "icon": "Base.png"
     },
     {
       "key": "hapa",
@@ -254,7 +273,8 @@
       "nodeMatches": [
         "hapa"
       ],
-      "surcharge": 300
+      "surcharge": 300,
+      "icon": "Hapa.png"
     },
     {
       "key": "matrix",
@@ -262,72 +282,82 @@
       "nodeMatches": [
         "matrix"
       ],
-      "surcharge": 250
+      "surcharge": 250,
+      "icon": "Matrix.png"
     },
     {
       "key": "diagonal_pole",
-      "name": "Diagonal Pole",
+      "name": "Diago",
       "nodeMatches": [
         "diagonal_pole"
-      ]
+      ],
+      "icon": "Diagonal_Pole.png"
     },
     {
       "key": "column_middle",
-      "name": "Säule mittig",
+      "name": "Diablo",
       "nodeMatches": [
         "column_in_middle"
-      ]
+      ],
+      "icon": "Column_in_Middle.png"
     },
     {
       "key": "pilaar",
-      "name": "Pilaar",
+      "name": "Ferdo",
       "nodeMatches": [
         "pilaar"
       ],
-      "surcharge": 200
+      "surcharge": 200,
+      "icon": "Pilaar.png"
     },
     {
       "key": "pillars",
-      "name": "Pillars",
+      "name": "Pilares",
       "nodeMatches": [
         "pillars"
       ],
-      "surcharge": 250
+      "surcharge": 250,
+      "icon": "Pillars.png"
     },
     {
       "key": "klassiek",
-      "name": "Klassiek Midden",
+      "name": "Moda",
       "nodeMatches": [
         "klassiek_midden"
-      ]
+      ],
+      "icon": "Klassiek_Midden.png"
     },
     {
       "key": "schuin",
       "name": "Schuin",
       "nodeMatches": [
         "schuin"
-      ]
+      ],
+      "icon": "Schuin.png"
     },
     {
       "key": "schuin25",
-      "name": "Schuin 2.5",
+      "name": "Bernard",
       "nodeMatches": [
         "schuin_25"
-      ]
+      ],
+      "icon": "Schuin_2.5.png"
     },
     {
       "key": "thore",
       "name": "Thore",
       "nodeMatches": [
         "thore"
-      ]
+      ],
+      "icon": "Thore.png"
     },
     {
       "key": "triple",
       "name": "Triple",
       "nodeMatches": [
         "triple"
-      ]
+      ],
+      "icon": "Butterfly.png"
     },
     {
       "key": "walrus",
@@ -335,138 +365,157 @@
       "nodeMatches": [
         "walrus"
       ],
-      "surcharge": 200
+      "surcharge": 200,
+      "icon": "Walrus.png"
     },
     {
       "key": "stative",
       "name": "Stative",
       "nodeMatches": [
         "stative"
-      ]
+      ],
+      "icon": "Stative.png"
     },
     {
       "key": "vn",
       "name": "VN",
       "nodeMatches": [
         "vn_tafelpoot"
-      ]
+      ],
+      "icon": "VN_Tafelpoot.png"
     },
     {
       "key": "flat_v",
-      "name": "Flat Dining V",
+      "name": "Vedo",
       "nodeMatches": [
         "flat_dining_v"
-      ]
+      ],
+      "icon": "Flat_Dining_V.png"
     },
     {
       "key": "flach_stahl",
-      "name": "Flach Stahl",
+      "name": "Pedro",
       "nodeMatches": [
         "flach_stahl"
-      ]
+      ],
+      "icon": "Flach_Stahl.png"
     },
     {
       "key": "hairpin",
       "name": "Hairpin",
       "nodeMatches": [
         "hairpin"
-      ]
+      ],
+      "icon": "Hairpin.png"
     },
     {
       "key": "demi_lune",
       "name": "Demi Lune",
       "nodeMatches": [
         "demi_lune"
-      ]
+      ],
+      "icon": "Demi_Lune.png"
     },
     {
       "key": "gerond",
-      "name": "Gerond",
+      "name": "Rondo",
       "nodeMatches": [
         "gerond"
-      ]
+      ],
+      "icon": "Gerond_Midden.png"
     },
     {
       "key": "cris_cross",
       "name": "Criss Cross",
       "nodeMatches": [
         "criss_cross"
-      ]
+      ],
+      "icon": "Cris_Cross.png"
     },
     {
       "key": "halve_plus",
-      "name": "Halve Plus",
+      "name": "Positivo",
       "nodeMatches": [
         "halve_plus"
-      ]
+      ],
+      "icon": "Halve_Plus.png"
     },
     {
       "key": "tapse_spin",
       "name": "Tapse Spin",
       "nodeMatches": [
         "tapse_spin"
-      ]
+      ],
+      "icon": "Tapse_Spin.png"
     },
     {
       "key": "twist",
       "name": "Twist Rond",
       "nodeMatches": [
         "twist_tafelpoot"
-      ]
+      ],
+      "icon": "Conisch.png"
     },
     {
       "key": "vierpoot",
       "name": "Vierpoot",
       "nodeMatches": [
         "vierpoot"
-      ]
+      ],
+      "icon": "4_Legs_on_pole.png"
     },
     {
       "key": "kolom_oval",
-      "name": "Kolom Oval",
+      "name": "Ovaal Kolom",
       "nodeMatches": [
         "kolom_oval"
       ],
-      "surcharge": 250
+      "surcharge": 250,
+      "icon": "Kolom_Oval.png"
     },
     {
       "key": "kolom_plus",
-      "name": "Kolom Plus",
+      "name": "Pluto",
       "nodeMatches": [
         "kolom_plus"
       ],
-      "surcharge": 200
+      "surcharge": 200,
+      "icon": "Kolom_Plus.png"
     },
     {
       "key": "kolom_rod",
-      "name": "Kolom Rod",
+      "name": "Ronde Kolom",
       "nodeMatches": [
         "kolom_rod"
       ],
-      "surcharge": 200
+      "surcharge": 200,
+      "icon": "Kolom_Rod.png"
     },
     {
       "key": "fluted",
-      "name": "Fluted",
+      "name": "Golvend Kolom",
       "nodeMatches": [
         "fluted"
       ],
-      "surcharge": 350
+      "surcharge": 350,
+      "icon": "Fluted.png"
     },
     {
       "key": "double_fluted",
-      "name": "Double Fluted",
+      "name": "Golvend Duo",
       "nodeMatches": [
         "double_fluted"
       ],
-      "surcharge": 450
+      "surcharge": 450,
+      "icon": "Double_Fluted.png"
     },
     {
       "key": "4legs_pole",
-      "name": "4 Beine auf Säule",
+      "name": "Vera",
       "nodeMatches": [
         "4_legs_on_pole"
-      ]
+      ],
+      "icon": "4_Legs_on_pole.png"
     }
   ],
   "finishes": [

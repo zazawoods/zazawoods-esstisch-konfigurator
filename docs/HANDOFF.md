@@ -441,3 +441,32 @@ Per User-Wunsch wird die Holz-Textur jetzt um 90° gedreht:
 
 Effekt: die Holzmaserung läuft jetzt entlang der KURZEN Achse der
 Tischplatte (Breite) statt entlang der Länge.
+
+---
+
+## Update — Commit `c8a8540`+ (Bogade-Icons & Markennamen)
+
+Form- und Gestell-Chips zeigen jetzt die echten PNG-Icons von
+bogade.com (heruntergeladen in `assets/icons/{shapes,legs}/`), und die
+Labels verwenden die bogade-Markennamen.
+
+### Formen (9)
+- Rechteck (was Rechthoekig.png), Oval, Dänisch-Oval, Schweizer Kante
+  (vorher "Verbaan"), Bootsform, Halbkreis, Kiesel, Organisch, Rund
+
+### Gestelle (Bogade-Markennamen für 40 Gestelle)
+- **Ekso** (X Modern), **X-vorm**, **V-vorm**, **A-vorm**, **Butterfly**
+- **Konische Spider**, **Lara** (Half Spider), **Cona** (Conisch),
+  **Blok**, **Base**, **Hapa**, **Matrix**
+- **Diago** (Diagonal Pole), **Diablo** (Column in Middle), **Ferdo** (Pilaar),
+  **Pilares** (Pillars), **Moda** (Klassiek Midden)
+- **Schuin**, **Bernard** (Schuin 2.5), **Thore**, **Triple**
+- **Walrus**, **Stative**, **VN**, **Vedo** (Flat Dining V), **Pedro** (Flach Stahl)
+- **Hairpin**, **Demi Lune**, **Rondo** (Gerond Midden), **Criss Cross**
+- **Positivo** (Halve Plus), **Tapse Spin**, **Twist Rond**, **Vierpoot**
+- **Ovaal Kolom**, **Pluto** (Kolom Plus), **Ronde Kolom**
+- **Golvend Kolom** (Fluted), **Golvend Duo** (Double Fluted), **Vera** (4 Legs on Pole)
+
+### CSS
+- Neue Variante `.chip-with-icon` mit `.ic`-span (38×30 PNG-Hintergrund,
+  background-size:contain). Wird für Form- und Gestell-Chips verwendet.
