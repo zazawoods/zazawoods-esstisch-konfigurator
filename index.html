@@ -541,24 +541,40 @@ resize();
 
 let CATALOG = { shapes: [], legs: [], finishes: [] };
 
-// Generate planar (top-down XZ projection) UVs for any mesh that lacks them.
-// Without UVs THREE can't map a texture onto the mesh at all — the tabletops
-// in our GLBs are exported without UVs, so the wood texture would just not
-// show. Called once per loaded shape.
+// Generate FACE-AWARE UVs (box-projection style) for meshes that lack them.
+// A simple top-down XZ planar projection makes edges stretch — the table
+// "side" (face whose normal is along Z or X) gets a constant V or U coord,
+// so the wood texture squashes to a single line. Instead we look at each
+// vertex's normal direction and choose the two perpendicular world axes
+// for UV. Wood grain (along texture U after the 90° rotation in applyFinish)
+// then runs along the LENGTH axis (X) on every face it sensibly can.
 function ensurePlanarUVs(root) {
+  const _v = new THREE.Vector3();
+  const _n = new THREE.Vector3();
   root.traverse(o => {
     if (!o.isMesh || !o.geometry) return;
     if (o.geometry.attributes.uv) return; // already has UVs
     const pos = o.geometry.attributes.position;
     if (!pos) return;
-    o.geometry.computeBoundingBox();
-    const b = o.geometry.boundingBox;
-    const sx = Math.max(b.max.x - b.min.x, 0.0001);
-    const sz = Math.max(b.max.z - b.min.z, 0.0001);
+    if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals();
+    const nor = o.geometry.attributes.normal;
     const uv = new Float32Array(pos.count * 2);
     for (let i = 0; i < pos.count; i++) {
-      uv[i*2]     = (pos.getX(i) - b.min.x) / sx;
-      uv[i*2 + 1] = (pos.getZ(i) - b.min.z) / sz;
+      const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+      const nx = Math.abs(nor.getX(i)), ny = Math.abs(nor.getY(i)), nz = Math.abs(nor.getZ(i));
+      let u, v;
+      if (ny >= nx && ny >= nz) {
+        // top / bottom face — use XZ
+        u = x; v = z;
+      } else if (nz >= nx) {
+        // long edge (face normal mostly along Z) — use XY → grain along X
+        u = x; v = y;
+      } else {
+        // short edge (face normal mostly along X) — use ZY (X is constant here)
+        u = z; v = y;
+      }
+      uv[i*2]     = u;
+      uv[i*2 + 1] = v;
     }
     o.geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   });
@@ -677,13 +693,12 @@ function applyState() {
 // Normalise a mesh name into a leg-segment for catalog matching.
 function extractLegSeg(name) {
   let n = (name || '').toLowerCase();
-  n = n.replace(/_\d{3,4}\d*(_\d+)?$/, '');
-  n = n.replace(/^[a-z]+_+/, '');
+  n = n.replace(/_\d{3,4}\d*(_\d+)?$/, '');         // trailing length + dup
+  n = n.replace(/^[a-z]+_+/, '');                       // shape prefix incl. extra _
   n = n.replace(/^_+/, '');
-  n = n.replace(/_-_wood$/, '');
-  n = n.replace(/_leg_rec_table_90_100_110$/, '');
-  n = n.replace(/_leg_round_table_90$/, '');
-  n = n.replace(/_\d$/, '');
+  n = n.replace(/_-_wood\d*$/, '');                    // wood material decorator (any digits)
+  n = n.replace(/_leg(_rec_table|_round_table)?(_\d{2,3})+$/, '');  // hairpin variants
+  n = n.replace(/_\d$/, '');                           // mesh-split index
   return n;
 }
 
@@ -745,11 +760,10 @@ async function applyFinish() {
         const t = tex.clone();
         t.center.set(0.5, 0.5);
         t.rotation = Math.PI / 2;
-        const wb = new THREE.Box3().setFromObject(o);
-        const sxw = Math.max(wb.max.x - wb.min.x, 0.05);
-        const szw = Math.max(wb.max.z - wb.min.z, 0.05);
-        // After 90° rotation U and V are swapped — set repeats accordingly.
-        t.repeat.set(Math.max(0.4, szw), Math.max(0.4, sxw));
+        // UV is now in world-space units (metres). 1 grain tile per metre
+        // gives a realistic plank look. Repeat is uniform — the rotation
+        // takes care of putting the grain along X / length.
+        t.repeat.set(1.0, 1.0);
         t.needsUpdate = true;
         m.map = t;
         m.color = new THREE.Color(0xffffff);

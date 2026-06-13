@@ -352,14 +352,6 @@
       "icon": "Thore.png"
     },
     {
-      "key": "triple",
-      "name": "Triple",
-      "nodeMatches": [
-        "triple"
-      ],
-      "icon": "Butterfly.png"
-    },
-    {
       "key": "walrus",
       "name": "Walrus",
       "nodeMatches": [
@@ -447,22 +439,6 @@
         "tapse_spin"
       ],
       "icon": "Tapse_Spin.png"
-    },
-    {
-      "key": "twist",
-      "name": "Twist Rond",
-      "nodeMatches": [
-        "twist_tafelpoot"
-      ],
-      "icon": "Conisch.png"
-    },
-    {
-      "key": "vierpoot",
-      "name": "Vierpoot",
-      "nodeMatches": [
-        "vierpoot"
-      ],
-      "icon": "4_Legs_on_pole.png"
     },
     {
       "key": "kolom_oval",
