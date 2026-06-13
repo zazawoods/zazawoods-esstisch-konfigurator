@@ -429,3 +429,15 @@ Fix: berechne die **Welt-Bbox** des Meshes via
 `Box3().setFromObject(mesh)`. Damit ist `sx` direkt in Metern, egal
 welche Skalen das Parent-Hierarchie hat. Repeat = (1, 1) bis (3, 2) je
 nach Tisch-Größe — Maserung wird klar erkennbar.
+
+---
+
+## Update — Commit `68d3be8`+ (Holzmaserung um 90° gedreht)
+
+Per User-Wunsch wird die Holz-Textur jetzt um 90° gedreht:
+- `tex.center.set(0.5, 0.5)` (drehen um Mittelpunkt der Textur)
+- `tex.rotation = Math.PI / 2`
+- `tex.repeat.set(szw, sxw)` (U/V vertauscht — passt zur Rotation)
+
+Effekt: die Holzmaserung läuft jetzt entlang der KURZEN Achse der
+Tischplatte (Breite) statt entlang der Länge.

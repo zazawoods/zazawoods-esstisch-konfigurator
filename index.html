@@ -723,9 +723,12 @@ async function applyFinish() {
       const wb = new THREE.Box3().setFromObject(o);
       const sxw = Math.max(wb.max.x - wb.min.x, 0.05);
       const szw = Math.max(wb.max.z - wb.min.z, 0.05);
-      const tilesU = Math.max(0.4, sxw);
-      const tilesV = Math.max(0.4, szw);
-      t.repeat.set(tilesU, tilesV);
+      // Rotate the wood texture by 90° around its centre so the grain runs
+      // along the short axis of the table instead of along the length.
+      t.center.set(0.5, 0.5);
+      t.rotation = Math.PI / 2;
+      // After a 90° rotation U and V are swapped — set repeat axes accordingly.
+      t.repeat.set(Math.max(0.4, szw), Math.max(0.4, sxw));
       m.map = t;
       m.color = new THREE.Color(0xffffff);
       m.metalness = 0;
