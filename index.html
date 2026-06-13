@@ -488,19 +488,20 @@ const ground = new THREE.Mesh(
 );
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
-scene.add(new THREE.AmbientLight(0xffffff, 0.45));
-const dir = new THREE.DirectionalLight(0xffffff, 0.9);
-dir.position.set(4, 8, 3);
+scene.add(new THREE.AmbientLight(0xffffff, 0.32));   // toned down so shadows show
+const dir = new THREE.DirectionalLight(0xffffff, 1.15);
+dir.position.set(3.5, 7, 2.5);
 dir.castShadow = true;
 dir.shadow.mapSize.set(2048, 2048);
 dir.shadow.camera.near = 0.5;
 dir.shadow.camera.far  = 20;
-dir.shadow.camera.left  = -4;
-dir.shadow.camera.right =  4;
-dir.shadow.camera.top   =  4;
-dir.shadow.camera.bottom = -4;
-dir.shadow.bias = -0.0005;
+dir.shadow.camera.left  = -3;
+dir.shadow.camera.right =  3;
+dir.shadow.camera.top   =  3;
+dir.shadow.camera.bottom = -3;
+dir.shadow.bias = -0.0003;
 dir.shadow.normalBias = 0.02;
+dir.shadow.radius = 4;                              // soft edges
 scene.add(dir);
 
 const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
@@ -1010,13 +1011,17 @@ function applyUrlState() {
 
 // ============ Icon buttons ============
 document.getElementById('btn-save').addEventListener('click', () => {
-  const data = JSON.stringify(state, null, 2);
-  const blob = new Blob([data], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `zazawoods-esstisch-${state.shape}-${state.leg}-${state.length}cm.json`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  showToast('Konfiguration gespeichert');
+  // Save: copy URL with all state params to clipboard. Far more useful than a
+  // JSON file the user can do nothing with — this lets them paste the link
+  // into an email / Notes / browser later.
+  const qs = new URLSearchParams({
+    shape: state.shape, leg: state.leg, length: state.length, finish: state.finish
+  });
+  const url = location.origin + location.pathname + '?' + qs.toString();
+  navigator.clipboard.writeText(url).then(
+    () => showToast('Konfiguration als Link kopiert'),
+    () => { prompt('Link kopieren:', url); showToast('Konfiguration gespeichert'); }
+  );
 });
 
 document.getElementById('btn-snd').addEventListener('click', async () => {
