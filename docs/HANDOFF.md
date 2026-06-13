@@ -484,3 +484,47 @@ oben und dem Label darunter — Pixel-Match zu bogade:
 - Padding: 8/4/6
 - Font: 12 px, line-height 1.15, text-align center
 - Container: flex-wrap mit 6 px Gap → automatisches Grid je nach Panel-Breite
+
+---
+
+## Update — Commit `4aec9e1`+ (Schwarze Pulverbeschichtung für ALLE Gestelle, Holzmaserung definitiv entlang Länge)
+
+### Gestelle → schwarz pulverbeschichtetes Metall (uniform)
+
+Bogade benutzt **keine Textur** für Tisch-Gestelle (Network-Inspektion
+zeigt: nur 14 Wood-JPGs + 1 Keramik-JPG + Logo werden geladen; keine
+Metall-Maps). Stattdessen reine Material-Properties:
+
+- `color: #1a1a1a` (sehr dunkles Grau, fast schwarz)
+- `metalness: 0.35` (halb-metallisch — typisch für Pulverbeschichtung)
+- `roughness: 0.5` (matt)
+- `envMapIntensity: 0.8` (etwas weniger Reflektion als pures Metall)
+- `map = null, normalMap = null, …` — alle Maps explizit gelöscht.
+
+Diese Einstellung wird auf **jedes Nicht-Tischplatten-Mesh** angewandt,
+egal ob der Source-Mesh ursprünglich Holz war (Hapa, Pilaar, Klassiek
+Midden …) oder Stahl (Spider, Hairpin). Resultat: alle Gestelle sehen
+einheitlich schwarz-matt-metallisch aus.
+
+### Holzmaserung — Bestätigung der Richtung
+
+Per Pixel-Analyse der `1_OIL_PLUS_2C_OAK_NATURAL.jpg`:
+
+- **rowVariance: 0.1**, **colVariance: 12.7**
+- → Maserung läuft im Source-JPG **vertikal** (entlang Bild-Y / UV-V).
+
+Mit unserer planaren UV (`U = X`, `V = Z`) und der 90°-Rotation:
+- Die Quell-V-Achse wird zur UV-U-Achse → Maserung liegt auf der
+  Mesh-X-Achse → das ist die **lange Achse** auf allen 9 Shape-GLBs
+  (rectangle, oval, danishOval, verbaan, boogvorm, halfrond, kiezel,
+  organic — alle elongiert entlang X; round ist symmetrisch).
+
+Maserung läuft jetzt korrekt entlang der Tischlänge auf Top-, Unter-
+und Seitenflächen, wie bei einem echten Massivholz-Tisch.
+
+### Material-Cloning
+
+`applyFinish()` klont jetzt das Material PRO MESH (`orig.clone()`) bevor
+es modifiziert wird. Damit verändern Eigenschaftsänderungen an einem
+Mesh keine anderen Meshes, die in der Source-GLB-Datei die gleiche
+Material-Instanz benutzten.

@@ -728,38 +728,50 @@ async function applyFinish() {
     if (!o.isMesh || !o.visible || !o.material) return;
     const rawLower = (o.name || '').toLowerCase();
     const isTop = /table_top|tabletop/.test(rawLower);
-    const mats = Array.isArray(o.material) ? o.material : [o.material];
-    mats.forEach(m => {
-      // Decide whether this material represents WOOD.
-      // Tabletops are ALWAYS wood. Legs: use color/map heuristic to skip pure metal.
-      const matNameLower = (m.name || '').toLowerCase();
-      const looksMetal = /metal|steel|stahl|chrom|iron/.test(matNameLower);
-      const woody = isTop || ((!looksMetal) && (m.map || (m.color && m.color.r > 0.3 && m.color.g > 0.2 && m.color.b > 0.15)));
-      if (!woody) return;
-      // Use a per-material cloned texture so we can set repeat independently.
-      // Aim for ~1 wood-grain tile per metre — looks natural on a table.
-      // We use the WORLD bbox of the mesh (Box3.setFromObject) — that accounts
-      // for every parent transform up the hierarchy. Using local geometry bbox
-      // would give us cm-unit numbers (artist worked in cm) which made
-      // tex.repeat = 260 — the mipmap then averaged the whole wood texture
-      // into a flat colour ("painted plastic" look).
-      const t = tex.clone();
-      t.needsUpdate = true;
-      const wb = new THREE.Box3().setFromObject(o);
-      const sxw = Math.max(wb.max.x - wb.min.x, 0.05);
-      const szw = Math.max(wb.max.z - wb.min.z, 0.05);
-      // Rotate the wood texture by 90° around its centre so the grain runs
-      // along the short axis of the table instead of along the length.
-      t.center.set(0.5, 0.5);
-      t.rotation = Math.PI / 2;
-      // After a 90° rotation U and V are swapped — set repeat axes accordingly.
-      t.repeat.set(Math.max(0.4, szw), Math.max(0.4, sxw));
-      m.map = t;
-      m.color = new THREE.Color(0xffffff);
-      m.metalness = 0;
-      m.roughness = 0.7;
+    // Clone material(s) PER MESH so changes to one mesh's material don't
+    // leak into other meshes that happened to share the same instance in
+    // the source GLB.
+    const origMats = Array.isArray(o.material) ? o.material : [o.material];
+    const newMats = origMats.map(orig => {
+      const m = orig.clone();
+      if (isTop) {
+        // ---- TABLETOP: wood texture, grain along length ----
+        // We confirmed the JPG has grain running VERTICALLY (along image-V).
+        // Planar UVs map V → mesh-Z. So WITHOUT rotation, grain would run
+        // across the table (perpendicular to length). Rotating the texture
+        // 90° around its centre swaps U↔V, making grain run along mesh-X,
+        // which is the LONG axis on every shape we have. That matches a
+        // real wooden plank table top.
+        const t = tex.clone();
+        t.center.set(0.5, 0.5);
+        t.rotation = Math.PI / 2;
+        const wb = new THREE.Box3().setFromObject(o);
+        const sxw = Math.max(wb.max.x - wb.min.x, 0.05);
+        const szw = Math.max(wb.max.z - wb.min.z, 0.05);
+        // After 90° rotation U and V are swapped — set repeats accordingly.
+        t.repeat.set(Math.max(0.4, szw), Math.max(0.4, sxw));
+        t.needsUpdate = true;
+        m.map = t;
+        m.color = new THREE.Color(0xffffff);
+        m.metalness = 0;
+        m.roughness = 0.7;
+      } else {
+        // ---- LEGS: black powder-coated metal, identical look on every leg ----
+        // No texture map at all — bogade does the same, since powder coating
+        // is a uniform surface that doesn't benefit from a tile map.
+        m.map = null;
+        m.normalMap = null;
+        m.roughnessMap = null;
+        m.metalnessMap = null;
+        m.color = new THREE.Color(0x1a1a1a);   // very dark grey, almost black
+        m.metalness = 0.35;                     // semi-metallic
+        m.roughness = 0.5;                      // matte, like real powder coat
+        m.envMapIntensity = 0.8;
+      }
       m.needsUpdate = true;
+      return m;
     });
+    o.material = Array.isArray(o.material) ? newMats : newMats[0];
   });
 }
 
