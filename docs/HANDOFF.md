@@ -405,3 +405,27 @@ Letzte sichtbare Unterschiede zum Picknick-Konfigurator beseitigt:
 Die CSS, Akkordeon-Struktur, Chip-Stile, Panel-Breite und Farben waren
 schon vorher identisch zum Picknick (verbatim CSS-Kopie). Nur Texte und
 Übersicht-Formatierung waren noch unterschiedlich.
+
+---
+
+## Update — Commit `88c2540`+ (Holzmaserung tatsächlich sichtbar)
+
+User-Bericht: Tischplatte sieht "wie gestrichener Kunststoff" aus —
+flat-coloured, no grain visible. Live-Inspektion via `window.__zw`:
+
+- `hasMap: true`, `hasUV: true`, `metalness: 0`, `roughness: 0.7` ✓
+- 5.1 % der Canvas-Pixel sind holz-toned (Bereich x:188-523, y:153-330) ✓
+- Aber das Holz erscheint als FLAT BROWN — keine Maserung.
+
+Ursache: **`tex.repeat = (260, 90)`**. Der Künstler hat die Geometrie
+in **Zentimeter-Einheiten** gespeichert, aber dem Szenen-Graph einen
+Scale von 0.01 gegeben, sodass die Welt-Bbox stimmt (~2.4 m). Mein
+`tex.repeat`-Code benutzte aber die LOKAL-Bbox (cm-Zahlen) und
+multiplizierte mit `currentRoot.scale.x`. Resultat: 260 Wiederholungen
+auf 2.4 m → GPU-Mipmap nimmt das kleinste Level → Mittelwert der
+Textur = flacher brauner Farbton.
+
+Fix: berechne die **Welt-Bbox** des Meshes via
+`Box3().setFromObject(mesh)`. Damit ist `sx` direkt in Metern, egal
+welche Skalen das Parent-Hierarchie hat. Repeat = (1, 1) bis (3, 2) je
+nach Tisch-Größe — Maserung wird klar erkennbar.

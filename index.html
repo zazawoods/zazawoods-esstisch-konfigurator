@@ -713,18 +713,18 @@ async function applyFinish() {
       if (!woody) return;
       // Use a per-material cloned texture so we can set repeat independently.
       // Aim for ~1 wood-grain tile per metre — looks natural on a table.
+      // We use the WORLD bbox of the mesh (Box3.setFromObject) — that accounts
+      // for every parent transform up the hierarchy. Using local geometry bbox
+      // would give us cm-unit numbers (artist worked in cm) which made
+      // tex.repeat = 260 — the mipmap then averaged the whole wood texture
+      // into a flat colour ("painted plastic" look).
       const t = tex.clone();
       t.needsUpdate = true;
-      o.geometry.computeBoundingBox();
-      const b = o.geometry.boundingBox;
-      const sx = Math.max(b.max.x - b.min.x, 0.001);
-      const sz = Math.max(b.max.z - b.min.z, 0.001);
-      // The world scale of the mesh hierarchy is unitScale * length-scale.
-      // bounding box is in local coords; multiply to estimate world span.
-      const worldScaleX = (currentRoot.scale.x || 1);
-      const worldScaleZ = (currentRoot.scale.z || 1);
-      const tilesU = Math.max(1, sx * worldScaleX);
-      const tilesV = Math.max(1, sz * worldScaleZ);
+      const wb = new THREE.Box3().setFromObject(o);
+      const sxw = Math.max(wb.max.x - wb.min.x, 0.05);
+      const szw = Math.max(wb.max.z - wb.min.z, 0.05);
+      const tilesU = Math.max(0.4, sxw);
+      const tilesV = Math.max(0.4, szw);
       t.repeat.set(tilesU, tilesV);
       m.map = t;
       m.color = new THREE.Color(0xffffff);
