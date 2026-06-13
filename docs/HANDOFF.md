@@ -528,3 +528,52 @@ und Seitenflächen, wie bei einem echten Massivholz-Tisch.
 es modifiziert wird. Damit verändern Eigenschaftsänderungen an einem
 Mesh keine anderen Meshes, die in der Source-GLB-Datei die gleiche
 Material-Instanz benutzten.
+
+---
+
+## Update — Commits `2527bce`+ (Lade-Speed, Kanten-UV, Icons, Gestell-Säuberung)
+
+### Lade-Geschwindigkeit
+- **Texturen 2048×2048 → 1024×1024 q=85**: 18.2 MB → 2.5 MB **(−86 %)**.
+- **Icon-PNGs auf max. 96 px Breite + optimize**: 11.6 MB → 0.2 MB **(−98 %)**.
+- **Repo-Total** war ~135 MB, jetzt ~117 MB. Erster Paint auf 4G
+  spürbar schneller, weil die Texturen JPGs der allergrösste
+  Download neben den Shape-GLBs sind.
+- **Shape-GLBs bleiben unkomprimiert** (12 MB jedes). DRACO-Kompression
+  ist die nächste, grosse Optimierung — würde 80–90 % bringen, braucht
+  aber gltf-transform / Draco-Encoder im Build und ein Test-Pass über
+  alle 9 Files. Eingeplant als separate Iteration.
+
+### Kanten-UV (face-aware planar projection)
+Die alte XZ-Top-Down-Projektion machte Tischkanten zu einem
+gestreckten Streifen. Jetzt entscheidet `ensurePlanarUVs()` pro
+Vertex anhand der dominanten Normalen-Achse:
+
+| Dominante Normale | UV-Achsen | Effekt |
+|---|---|---|
+| Y (Oben/Unten)   | (X, Z)    | Maserung läuft entlang X = Länge |
+| Z (Lange Kante)  | (X, Y)    | Maserung läuft entlang X = Länge |
+| X (Kurze Kante)  | (Z, Y)    | Maserung läuft entlang Z = Breite (Kompromiss; ohne End-Grain-Textur das Beste was geht) |
+
+`tex.repeat` ist auf `(1, 1)` reduziert, weil die UVs jetzt **Welt-
+Einheiten** sind — 1 Maserung-Kachel pro Meter.
+
+### Icons sichtbar
+Das `.ic`-`<span>` war als `display: inline` definiert (Default für
+`<span>`). Inline-Boxen ignorieren `width`/`height`, also fielen alle
+Icons auf 0 px zusammen. Fix: `display: block` für `.chip-with-icon .ic`.
+
+### Gestelle (37 statt 40)
+Triple, Vierpoot, Twist Rond aus `catalog.json` entfernt — sie
+existieren NICHT in den Shape-GLB-Dateien, nur als Standalone-GLBs in
+`assets/legs/`. Mit dem aktuellen Filter (der nur Shape-interne Meshes
+sichtbar/unsichtbar schaltet) konnten sie nie funktionieren. Werden
+in einer Folge-Iteration wieder eingeführt, wenn wir Standalone-Legs
+ins Szene-Graph injizieren.
+
+### Hairpin Suffix-Regex
+`extractLegSeg()` strippt jetzt flexiblere "Hairpin"-Endungen:
+- `_-_wood\d*$` (war: nur `_-_wood$`)
+- `_leg(_rec_table|_round_table)?(_\d{2,3})+$` (war: nur exakt `_leg_rec_table_90_100_110`)
+
+Hairpin wird damit auf jedem Shape korrekt erkannt.
