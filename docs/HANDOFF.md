@@ -387,3 +387,21 @@ Fix in zwei Teilen:
 Folge: ALLE Tischplatten zeigen jetzt die gewählte Holzfinish-Textur,
 die Maserung wird realistisch gekachelt, der gewählte Finish ist
 unmittelbar im Vorschau-3D-Modell sichtbar.
+
+---
+
+## Update — Commit `402dc47`+ (UI 1:1 mit Picknick / Bogade)
+
+Letzte sichtbare Unterschiede zum Picknick-Konfigurator beseitigt:
+
+- **CTA-Text**: "Anfrage senden" → **"In den Warenkorb legen"** (gleicher
+  Wortlaut wie auf zazawoods.de und im Picknick-Konfigurator).
+- **Übersicht-Format**: jetzt im Picknick-Stil
+  - Zeile 1: `<Form> · Eichenholz · <Finish>`
+  - Zeile 2: `<L> × <B> × <H> cm` (z. B. `260 × 100 × 76 cm`)
+- **`catalog.json` erweitert**: jede Shape hat jetzt `width` und `height`
+  (in cm) für die Anzeige in der Übersicht.
+
+Die CSS, Akkordeon-Struktur, Chip-Stile, Panel-Breite und Farben waren
+schon vorher identisch zum Picknick (verbatim CSS-Kopie). Nur Texte und
+Übersicht-Formatierung waren noch unterschiedlich.

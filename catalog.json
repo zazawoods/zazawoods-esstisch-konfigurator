@@ -16,7 +16,9 @@
         400
       ],
       "basePrice": 1200,
-      "pricePerCm": 5.0
+      "pricePerCm": 5.0,
+      "width": 100,
+      "height": 76
     },
     {
       "key": "oval",
@@ -34,7 +36,9 @@
         400
       ],
       "basePrice": 1300,
-      "pricePerCm": 5.0
+      "pricePerCm": 5.0,
+      "width": 100,
+      "height": 76
     },
     {
       "key": "danishOval",
@@ -52,7 +56,9 @@
         400
       ],
       "basePrice": 1400,
-      "pricePerCm": 5.5
+      "pricePerCm": 5.5,
+      "width": 100,
+      "height": 76
     },
     {
       "key": "verbaan",
@@ -70,7 +76,9 @@
         400
       ],
       "basePrice": 1300,
-      "pricePerCm": 5.0
+      "pricePerCm": 5.0,
+      "width": 100,
+      "height": 76
     },
     {
       "key": "boogvorm",
@@ -88,7 +96,9 @@
         400
       ],
       "basePrice": 1500,
-      "pricePerCm": 6.0
+      "pricePerCm": 6.0,
+      "width": 110,
+      "height": 76
     },
     {
       "key": "halfrond",
@@ -106,7 +116,9 @@
         400
       ],
       "basePrice": 1350,
-      "pricePerCm": 5.5
+      "pricePerCm": 5.5,
+      "width": 100,
+      "height": 76
     },
     {
       "key": "kiezel",
@@ -124,7 +136,9 @@
         400
       ],
       "basePrice": 1500,
-      "pricePerCm": 6.0
+      "pricePerCm": 6.0,
+      "width": 110,
+      "height": 76
     },
     {
       "key": "organic",
@@ -139,7 +153,9 @@
         280
       ],
       "basePrice": 1700,
-      "pricePerCm": 7.0
+      "pricePerCm": 7.0,
+      "width": 100,
+      "height": 76
     },
     {
       "key": "round",
@@ -152,7 +168,9 @@
         160
       ],
       "basePrice": 1100,
-      "pricePerCm": 8.0
+      "pricePerCm": 8.0,
+      "width": 100,
+      "height": 76
     }
   ],
   "legs": [

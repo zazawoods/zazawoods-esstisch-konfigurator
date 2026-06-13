@@ -415,7 +415,7 @@
         <span class="val" id="price">€ –</span>
       </div>
       <button class="cta" id="cta">
-        <span>Anfrage senden</span>
+        <span>In den Warenkorb legen</span>
       </button>
     </div>
   </aside>
@@ -758,8 +758,11 @@ function updateOverzicht() {
   const s = CATALOG.shapes.find(x => x.key === state.shape);
   const l = CATALOG.legs.find(x => x.key === state.leg);
   const f = CATALOG.finishes.find(x => x.key === state.finish);
-  document.getElementById('ov-l1').textContent = (s ? s.name : '–') + ' · ' + (l ? l.name : '–');
-  document.getElementById('ov-l2').textContent = (state.length || '–') + ' cm · ' + (f ? f.name : '–');
+  const W = s ? s.width : 100;
+  const H = s ? s.height : 76;
+  const L = state.length || '–';
+  document.getElementById('ov-l1').textContent = (s ? s.name : '–') + ' · Eichenholz · ' + (f ? f.name : '–');
+  document.getElementById('ov-l2').textContent = L + ' × ' + W + ' × ' + H + ' cm';
   document.getElementById('sub-shape').textContent = s ? s.name : '–';
   document.getElementById('sub-leg').textContent = l ? l.name : '–';
   document.getElementById('sub-length').textContent = state.length ? state.length + ' cm' : '–';
