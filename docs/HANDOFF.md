@@ -758,3 +758,29 @@ NICHT mehr.
 6. **`fluted.nodeMatches` erweitert um `round_fluted`**: das
    Round-spezifische "Round_Fluted_-_WOOD"-Mesh ist als Fluted-Gestell
    gemeint, wird jetzt als solches erkannt.
+
+---
+
+## Update — Commit `9b7162c`+ (DRACO-Kompression aktiv)
+
+DRACO-Kompression über alle 9 Shape-GLBs angewandt:
+
+| | vorher | nachher | Faktor |
+|---|---:|---:|---:|
+| Shapes total | **85 MB** | **3.8 MB** | **22×** |
+
+Pro-Datei: jede der 7 grossen Form-GLBs ging von ~12 MB auf ~510 KB,
+Organic von 4.2 MB auf 204 KB, Round von 1.3 MB auf 71 KB.
+
+`DRACOLoader` war im Konfigurator bereits korrekt eingebunden (mit
+Decoder von `gstatic.com/draco/versioned/decoders/1.5.6/`), also keine
+Code-Änderung nötig. Komprimierte Dateien werden transparent dekodiert.
+
+Erwartete Auswirkung: erster Form-Load auf 4G fällt von ~3-5 s auf
+~0.5 s. Form-Wechsel sind nun nahezu instant. Repo-Total liegt jetzt
+bei ~36 MB statt ~135 MB.
+
+**Standalone-Gestelle (`assets/legs/`)** sind noch unkomprimiert (32 MB)
+— werden derzeit nicht vom Konfigurator geladen, also nicht
+performance-relevant. Können in einer späteren Iteration ebenfalls
+komprimiert werden.
