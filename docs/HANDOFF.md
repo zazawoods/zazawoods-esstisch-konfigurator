@@ -705,3 +705,56 @@ dir.shadow.normalBias = 0.02;
 Plus `setActiveShape()` setzt nach dem Load auf jedem Mesh
 `castShadow = true; receiveShadow = true`. Die Boden-Disc hatte schon
 `receiveShadow = true`.
+
+---
+
+## Update — Commit `446ea69`+ (Form↔Gestell-Kompatibilität)
+
+### Problem
+
+Beim Wechsel auf eine kleinere/spezialisierte Form (z. B. **Round** oder
+**Organic**) zeigte der Konfigurator gar nichts mehr: die GLBs für
+solche Formen enthalten nur eine Teilmenge der Gestelle. Round.glb hat
+z. B. nur 9 Gestelle (Diagonal Pole, Klassiek Midden, Pilaar, Pillars,
+Kolom Rod, Vierpoot, Twist Rond, …), das Standard-Gestell X Modern
+gehört NICHT dazu. Da der Filter exakt nach `x_modern` suchte, blieb
+nichts sichtbar.
+
+Auch bei DanishOval war das Mesh-Naming `Danish_Oval__X_modern_240`
+mit DOPPELTEM Unterstrich — meine Prefix-Stripping-Regel
+`^[a-z]+_+` hat aber nur "danish_" entfernt, übrig blieb
+"oval__x_modern" → matcht das Catalog-`nodeMatches: ['x_modern']`
+NICHT mehr.
+
+### Lösung
+
+1. **`extractLegSeg()` robuster**: kennt die mehrwortigen Shape-Prefixe
+   explizit (`danish_oval__`, `oval__`, …) und probiert sie zuerst.
+
+2. **`shape.availableLegs[]` in `catalog.json`**: jede Form führt jetzt
+   eine Liste der Catalog-Leg-Keys, die in dieser Form-GLB tatsächlich
+   vorhanden sind. Aus dem Live-Inventar der 9 GLBs zusammengestellt.
+
+| Form | Gestelle |
+|---|---|
+| rectangle, oval, verbaan, boogvorm, halfrond | ~37 (alle) |
+| danishOval, kiezel | 36–37 |
+| organic | **10** (Spezial-Form) |
+| round | **9** (Diagonal Pole, Gerond, Klassiek Midden, Kolom Rod, Pilaar, Pillars, Fluted, Twist Rond, Vierpoot) |
+
+3. **`buildLegChips()` filtert**: nur Gestelle aus
+   `shape.availableLegs` werden gerendert. So sieht der Nutzer auf
+   Round nur 9 Chips statt 37 leere Auswahlmöglichkeiten.
+
+4. **Auto-Snap im Shape-Handler**: ist das aktuelle `state.leg` nicht
+   in der neuen Form verfügbar, wechselt automatisch auf das erste
+   verfügbare. Kein "leerer Bildschirm" mehr beim Form-Wechsel.
+
+5. **`twist` und `vierpoot` zurück in Catalog**: ich hatte sie vorher
+   entfernt, weil sie in den rechteckigen Form-GLBs nicht waren. Sie
+   sind aber sehr wohl in Round.glb (und werden jetzt korrekt
+   nur dort als Chips angezeigt).
+
+6. **`fluted.nodeMatches` erweitert um `round_fluted`**: das
+   Round-spezifische "Round_Fluted_-_WOOD"-Mesh ist als Fluted-Gestell
+   gemeint, wird jetzt als solches erkannt.

@@ -729,12 +729,22 @@ function applyState() {
 // Normalise a mesh name into a leg-segment for catalog matching.
 function extractLegSeg(name) {
   let n = (name || '').toLowerCase();
-  n = n.replace(/_\d{3,4}\d*(_\d+)?$/, '');         // trailing length + dup
-  n = n.replace(/^[a-z]+_+/, '');                       // shape prefix incl. extra _
+  // trailing length + dup-index
+  n = n.replace(/_\d{3,4}\d*(_\d+)?$/, '');
+  // strip known shape prefixes (multi-word handled — "danish_oval__" before
+  // "danish_"; "double_underscore" common in some shape files)
+  const PREFIXES = ['danish_oval__','danish_oval_','rectangle__','rectangle_',
+                    'oval__','oval_','verbaan__','verbaan_',
+                    'boogvorm__','boogvorm_','halfrond__','halfrond_',
+                    'kiezel__','kiezel_','organic__','organic_',
+                    'round__','round_'];
+  for (const p of PREFIXES) {
+    if (n.startsWith(p)) { n = n.slice(p.length); break; }
+  }
   n = n.replace(/^_+/, '');
-  n = n.replace(/_-_wood\d*$/, '');                    // wood material decorator (any digits)
-  n = n.replace(/_leg(_rec_table|_round_table)?(_\d{2,3})+$/, '');  // hairpin variants
-  n = n.replace(/_\d$/, '');                           // mesh-split index
+  n = n.replace(/_-_wood\d*$/, '');
+  n = n.replace(/_leg(_rec_table|_round_table)?(_\d{2,3})+$/, '');
+  n = n.replace(/_\d$/, '');
   return n;
 }
 
@@ -887,6 +897,11 @@ function buildShapeChips() {
       if (state.shape === s.key) return;
       state.shape = s.key;
       if (!s.lengths.includes(state.length)) state.length = pickDefaultLength(s);
+      // Auto-snap leg if current one isn't available in this shape
+      if (s.availableLegs && s.availableLegs.length && !s.availableLegs.includes(state.leg)) {
+        state.leg = s.availableLegs[0];
+        buildLegChips();
+      }
       buildLengthChips(); buildShapeChips();
       await setActiveShape(s.key);
     });
@@ -895,7 +910,10 @@ function buildShapeChips() {
 }
 function buildLegChips() {
   const g = document.getElementById('leg-chips'); g.innerHTML = '';
+  const shape = CATALOG.shapes.find(s => s.key === state.shape);
+  const allowed = (shape && shape.availableLegs) ? new Set(shape.availableLegs) : null;
   CATALOG.legs.forEach(l => {
+    if (allowed && !allowed.has(l.key)) return;
     const el = document.createElement('button');
     el.className = 'chip chip-with-icon' + (state.leg === l.key ? ' on' : '');
     el.type = 'button';
