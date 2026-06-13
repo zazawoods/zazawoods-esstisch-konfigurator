@@ -557,26 +557,56 @@ let CATALOG = { shapes: [], legs: [], finishes: [] };
 // for UV. Wood grain (along texture U after the 90° rotation in applyFinish)
 // then runs along the LENGTH axis (X) on every face it sensibly can.
 function ensurePlanarUVs(root) {
-  const _v = new THREE.Vector3();
+  const _v0 = new THREE.Vector3();
+  const _v1 = new THREE.Vector3();
+  const _v2 = new THREE.Vector3();
+  const _e1 = new THREE.Vector3();
+  const _e2 = new THREE.Vector3();
+  const _n  = new THREE.Vector3();
   root.updateMatrixWorld(true);
   root.traverse(o => {
     if (!o.isMesh || !o.geometry) return;
     if (o.geometry.attributes.uv) return;
-    const pos = o.geometry.attributes.position;
-    if (!pos) return;
+    // Need non-indexed geometry so neighbouring triangles can have INDEPENDENT
+    // UVs (vertex duplication at face boundaries). This is what avoids the
+    // "grain jumps direction" seam problem of per-vertex UV picking.
+    let geom = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry;
+    const pos = geom.attributes.position;
+    if (!pos || pos.count % 3 !== 0) return;
     const matWorld = o.matrixWorld;
     const uv = new Float32Array(pos.count * 2);
-    // Simple planar XZ projection in WORLD space.
-    // Top + bottom faces of a flat tabletop look perfect (grain along X = length
-    // after the 90° rotation in applyFinish). Edges share the same projection,
-    // so they show a stretched-but-consistent grain — no UV seams, no "direction
-    // jumps". This is the same approach bogade uses.
-    for (let i = 0; i < pos.count; i++) {
-      _v.fromBufferAttribute(pos, i).applyMatrix4(matWorld);
-      uv[i*2]     = _v.x;
-      uv[i*2 + 1] = _v.z;
+    // Process per triangle
+    for (let t = 0; t < pos.count; t += 3) {
+      _v0.fromBufferAttribute(pos, t  ).applyMatrix4(matWorld);
+      _v1.fromBufferAttribute(pos, t+1).applyMatrix4(matWorld);
+      _v2.fromBufferAttribute(pos, t+2).applyMatrix4(matWorld);
+      // Geometric normal of the triangle (in world space)
+      _e1.subVectors(_v1, _v0);
+      _e2.subVectors(_v2, _v0);
+      _n.crossVectors(_e1, _e2).normalize();
+      const nx = Math.abs(_n.x);
+      const ny = Math.abs(_n.y);
+      const nz = Math.abs(_n.z);
+      // Choose UV axes so that mesh-U is always the table-length-X axis
+      // wherever physically possible (top, bottom, long edges).
+      let pickU, pickV;
+      if (ny >= nx && ny >= nz) {
+        // Top / bottom (Y-normal): UV = (X, Z) → grain along X = length
+        pickU = v => v.x; pickV = v => v.z;
+      } else if (nz >= nx) {
+        // Long edge (Z-normal): UV = (X, Y) → grain along X = length
+        pickU = v => v.x; pickV = v => v.y;
+      } else {
+        // Short edge (X-normal): UV = (Z, Y) → grain runs along Z
+        // (across width — physically can't run along length on this face).
+        pickU = v => v.z; pickV = v => v.y;
+      }
+      uv[t*2]       = pickU(_v0); uv[t*2 + 1]     = pickV(_v0);
+      uv[(t+1)*2]   = pickU(_v1); uv[(t+1)*2 + 1] = pickV(_v1);
+      uv[(t+2)*2]   = pickU(_v2); uv[(t+2)*2 + 1] = pickV(_v2);
     }
-    o.geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    geom.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    if (geom !== o.geometry) o.geometry = geom;
   });
 }
 

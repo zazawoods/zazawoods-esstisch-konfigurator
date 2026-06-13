@@ -633,3 +633,35 @@ Lösung: Rückkehr zu **simpler planarer XZ-Projektion** im Welt-Raum.
 
 Damit ist die Top- und Unterseite jeder Tischplatte konsistent und die
 Maserung läuft sauber entlang der Länge (X-Achse).
+
+---
+
+## Update — Commit `3746edf`+ (Per-Face UV via Non-Indexed Geometry)
+
+User-Bericht: nach Rückkehr zur einfachen planaren XZ-Projektion liefen
+die **Kanten** in die falsche Richtung. Auf der langen Kante war V (= Z)
+quasi konstant → Textur wurde zu einer einzelnen Linie gestreckt; auf
+der kurzen Kante war U (= X) konstant → ähnliches Problem.
+
+Lösung: **Per-Triangle UV** über Non-Indexed Geometry. Das vermeidet
+gleichzeitig Nähte (Vertices an Kantenstössen werden dupliziert, jedes
+Triangle hat seine eigenen Vertex-Daten) und gibt jeder Gesichtsart
+die passende Projektion:
+
+| Triangle-Normale | UV-Axen | Maserung |
+|---|---|---|
+| Y dominant (Oben/Unten) | (X, Z) | entlang X = Länge |
+| Z dominant (lange Kante) | (X, Y) | entlang X = Länge |
+| X dominant (kurze Kante) | (Z, Y) | entlang Z = Breite (physisch unvermeidlich) |
+
+Implementierung in `ensurePlanarUVs`:
+1. Wenn `geometry.index` vorhanden ist → `geom = geom.toNonIndexed()`.
+2. Pro Triangle (3 Vertices): cross-product → geometrische Normale in
+   Welt-Koord.
+3. Anhand der dominanten Normalen-Achse die 2 Welt-Axen für UV wählen.
+4. Alle 3 Vertices des Triangles bekommen dieselbe Projektion → keine
+   Diskontinuität WITHIN dem Triangle, kein Stretching ALONG der Kante.
+
+Vertex-Verdopplung an Kantenstössen erhöht die Vertex-Zahl je nach
+Geometrie ca. 2–3× — bei unseren 200k-Triangle GLBs ist das immer
+noch unter 1 M Vertices, problemlos.
