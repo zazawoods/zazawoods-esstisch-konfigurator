@@ -1,0 +1,115 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>html,body{margin:0;background:#fff}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"/three/build/three.module.js","three/addons/":"/three/examples/jsm/"}}</script>
+</head><body>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const SIZE = parseInt(new URLSearchParams(location.search).get('size') || '1600');
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(SIZE, SIZE); renderer.setPixelRatio(1);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xffffff);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+// ── measure the configurator GLB (Diablo / Konische Holzsäule) ───────────────
+async function measureGLB() {
+  const loader = new GLTFLoader();
+  const draco = new DRACOLoader(); draco.setDecoderPath('/draco/'); loader.setDRACOLoader(draco);
+  const gltf = await loader.loadAsync('/glb/external-legs/Konische%20Holzsaeule.glb');
+  const box = new THREE.Box3().setFromObject(gltf.scene);
+  const size = box.getSize(new THREE.Vector3());
+  // slice: collect xz extents in bottom 3% and top 3%
+  const lo = { x: [Infinity, -Infinity], z: [Infinity, -Infinity] }, hi = { x: [Infinity, -Infinity], z: [Infinity, -Infinity] };
+  const v = new THREE.Vector3();
+  gltf.scene.traverse(m => { if (!m.isMesh) return; m.updateWorldMatrix(true, false); const p = m.geometry.attributes.position;
+    for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i).applyMatrix4(m.matrixWorld);
+      const t = (v.y - box.min.y) / size.y; const tgt = t < 0.03 ? lo : (t > 0.97 ? hi : null); if (!tgt) continue;
+      tgt.x[0] = Math.min(tgt.x[0], v.x); tgt.x[1] = Math.max(tgt.x[1], v.x); tgt.z[0] = Math.min(tgt.z[0], v.z); tgt.z[1] = Math.max(tgt.z[1], v.z); } });
+  return { size, bottom: { x: lo.x[1] - lo.x[0], z: lo.z[1] - lo.z[0] }, top: { x: hi.x[1] - hi.x[0], z: hi.z[1] - hi.z[0] } };
+}
+
+// ── parametric fluted elliptical cone (Stäbchenholz) ─────────────────────────
+function flutedCone({ h, bx, bz, tx, ty, slats = 96, sub = 10, rings = 48, amp = 0.35 }) {
+  // bx,bz: bottom full axes (m); tx,tz: top full axes; amp: slat rounding depth in cm
+  const seg = slats * sub; const pos = [], nrm = [], uv = [], idx = [];
+  for (let r = 0; r <= rings; r++) {
+    const t = r / rings, y = t * h;
+    const ax = (bx + (tx - bx) * t) / 2, az = (bz + (ty - bz) * t) / 2;
+    for (let s = 0; s <= seg; s++) {
+      const th = (s / seg) * Math.PI * 2;
+      // slat profile: half-round bump across each slat (cos shape), depth amp cm
+      const f = (s % sub) / sub; const bump = Math.sin(Math.PI * f); // 0..1..0 across slat
+      const d = (amp / 100) * (bump - 1); // recess between slats
+      const cx = Math.cos(th), sz = Math.sin(th);
+      // radial direction of ellipse normal approx
+      const x = (ax + d) * cx, z = (az + d) * sz;
+      pos.push(x, y, z); uv.push((s / seg) * 6, (y / h) * 2.2); }
+  }
+  for (let r = 0; r < rings; r++) for (let s = 0; s < seg; s++) { const a = r * (seg + 1) + s, b = a + seg + 1; idx.push(a, b, a + 1, b, b + 1, a + 1); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+  return g;
+}
+function ellipseCap(ax, az, y, flip) { const shape = new THREE.Shape(); shape.absellipse(0, 0, ax / 2, az / 2, 0, Math.PI * 2, false, 0); const g = new THREE.ShapeGeometry(shape, 96); g.rotateX(flip ? Math.PI / 2 : -Math.PI / 2); g.translate(0, y, 0); return g; }
+
+const tex = await new THREE.TextureLoader().loadAsync('/tex/1-oil-plus-2c-oak-natural.jpg');
+tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.anisotropy = 8;
+const bump = tex.clone(); bump.needsUpdate = true;
+const wood = new THREE.MeshStandardMaterial({ map: tex, bumpMap: bump, bumpScale: 0.01, roughness: 0.62, metalness: 0, envMapIntensity: 0.55 });
+const capTex = tex.clone(); capTex.needsUpdate = true; capTex.repeat.set(1.5, 1.5);
+const capMat = new THREE.MeshStandardMaterial({ map: capTex, roughness: 0.7, envMapIntensity: 0.4 });
+
+const m = await measureGLB();
+const H = 0.72; const scale = 0.89 / Math.max(m.bottom.x, m.bottom.z); // real product 89 cm long side
+const bx = Math.max(m.bottom.x, m.bottom.z) * scale, bz = Math.min(m.bottom.x, m.bottom.z) * scale;
+const tx = Math.max(m.top.x, m.top.z) * scale, tz = Math.min(m.top.x, m.top.z) * scale;
+window.__dims = { glb: m, bx, bz, tx, tz };
+
+const group = new THREE.Group();
+const body = new THREE.Mesh(flutedCone({ h: H, bx, bz, tx, ty: tz }), wood); body.castShadow = body.receiveShadow = true; group.add(body);
+group.add(new THREE.Mesh(ellipseCap(tx, tz, H, false), capMat));
+// mounting plate: matte black steel, slightly larger than top, 8 mm
+const px = tx - 0.03, pz = tz + 0.05;
+const plate = new THREE.Mesh(new THREE.BoxGeometry(px, 0.008, pz), new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.55, metalness: 0.4, envMapIntensity: 0.5 }));
+plate.position.y = H + 0.004; plate.castShadow = false; group.add(plate);
+// bolt holes (dark discs) near the plate corners
+const holeMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.9 });
+for (const sx of [-1, 1]) for (const sz of [-1, 1]) for (const k of [0.36, 0.2]) { const hgeo = new THREE.CircleGeometry(0.006, 24); hgeo.rotateX(-Math.PI / 2); const hm = new THREE.Mesh(hgeo, holeMat); hm.position.set(sx * px * k, H + 0.0085, sz * pz * 0.38); group.add(hm); }
+scene.add(group);
+
+// floor: white with soft shadow + slight vignette gradient via large plane and fog
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.ShadowMaterial({ opacity: 0.16 }));
+floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+const floorBase = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.MeshStandardMaterial({ color: 0xf4f4f4, roughness: 1 }));
+floorBase.rotation.x = -Math.PI / 2; floorBase.position.y = -0.001; floorBase.receiveShadow = true; scene.add(floorBase);
+scene.fog = new THREE.Fog(0xffffff, 3.5, 9);
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0xd8d4cc, 0.9));
+const key = new THREE.DirectionalLight(0xffffff, 1.8); key.position.set(-2.4, 5.0, 2.2); key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048); key.shadow.radius = 10; key.shadow.bias = -0.0005;
+Object.assign(key.shadow.camera, { left: -2, right: 2, top: 2, bottom: -2, near: 0.5, far: 12 }); scene.add(key);
+const fill = new THREE.DirectionalLight(0xffffff, 0.7); fill.position.set(-3, 2, 1.5); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffffff, 0.5); rim.position.set(-1, 3, -3); scene.add(rim);
+
+const camera = new THREE.PerspectiveCamera(30, 1, 0.05, 50);
+const target = new THREE.Vector3(0, H * 0.47, 0);
+window.__shoot = (az, el, dist, fov, ty) => {
+  camera.fov = fov || 30; camera.updateProjectionMatrix();
+  const a = THREE.MathUtils.degToRad(az), e = THREE.MathUtils.degToRad(el);
+  camera.position.set(dist * Math.cos(e) * Math.sin(a), dist * Math.sin(e) + (ty ?? target.y), dist * Math.cos(e) * Math.cos(a));
+  camera.lookAt(new THREE.Vector3(0, ty ?? target.y, 0));
+  renderer.render(scene, camera);
+  return renderer.domElement.toDataURL('image/png');
+};
+window.__ready = true;
+</script></body></html>
