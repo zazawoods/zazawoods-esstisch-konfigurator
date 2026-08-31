@@ -10,7 +10,7 @@ const NEW_LEGS = {
   'Vario Tischgestell':            { variantId: '53598115856650', price: 24500 },
   'Doppel V-Tischgestell':         { variantId: '53598118412554', price: 22500 },
   'Felix Tischgestell':            { variantId: '53598124540170', price: 22000 },
-  'Konische Holzsäule aus Stäbchenholz, Eiche': { variantId: '53602745778442', price: 52000 },
+  'Konische Holzsäule aus Eichenholz': { variantId: '53602745778442', price: 52000 },
 };
 
 const BASE = process.argv[3] || 'http://localhost:3210';
