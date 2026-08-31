@@ -5,7 +5,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { USDZExporter } from 'three/addons/exporters/USDZExporter.js';
-import { TABLE_SHAPES, MATERIAL_TYPES, EDGE_OPTIONS, POWDER_COAT_COLORS, DEFAULT_STATE, BUILD_VERSION } from './config.js?v=e2b6a7c3';
+import { TABLE_SHAPES, MATERIAL_TYPES, EDGE_OPTIONS, POWDER_COAT_COLORS, DEFAULT_STATE, BUILD_VERSION } from './config.js?v=d5f8a9b2';
 
 // ─── Zaza Woods Untergestell whitelist (user-supplied 2026-06-19) ───
 // model = { name, isWood }  → green card, clicking loads 3D model
@@ -251,7 +251,7 @@ function findBaseVariant(product, shape, state) {
   return product.baseVariants.find(v => (v.opt1||'').startsWith(lenPrefix)) || product.baseVariants[0];
 }
 
-import { fetchAllPrices, formatPrice, getCachedTotal, setCachedTotal } from './shopify.js?v=e2b6a7c3';
+import { fetchAllPrices, formatPrice, getCachedTotal, setCachedTotal } from './shopify.js?v=d5f8a9b2';
 
 class TableConfigurator {
   constructor() {
@@ -559,6 +559,24 @@ class TableConfigurator {
       setTimeout(() => this._maybeAutoAR(), 1200);
       this.updatePrice();
     });
+    // Boot watchdog (2026-08-31): whatever goes wrong on a phone (hung fetch,
+    // dead GPU context, decoder failure) the customer must never sit in front
+    // of an endless loader. 40 s after init: one guarded reload; if that
+    // already happened recently, surface a clear message.
+    this._bootWatchdog = setTimeout(() => {
+      if (this._initialLoadDone) return;
+      let last = 0;
+      try { last = parseInt(sessionStorage.getItem('zw_boot_reload') || '0', 10); } catch (e) {}
+      if (Date.now() - last > 120000) {
+        try { sessionStorage.setItem('zw_boot_reload', String(Date.now())); } catch (e) {}
+        console.warn('[ZW] boot watchdog: first load stuck — reloading once');
+        location.reload();
+      } else {
+        console.warn('[ZW] boot watchdog: still stuck after reload — showing hint');
+        const el = document.getElementById('loader-text');
+        if (el) el.textContent = 'Verbindung langsam — bitte Seite neu laden.';
+      }
+    }, 40000);
     this.loadModel(this.state.shape);
     this.animate();
     this.fixMobileHeight();
@@ -1159,7 +1177,10 @@ class TableConfigurator {
         // Skip the extra 90° Y rotation and use splitSetLeg → splitHalves spread.
         const isButterflyExt = /^Butterfly Tischbeine aus Eichenholz/i.test(title);
         const isHalbrundeExt = /^Halbrunde Tischbeine aus Eichenholz/i.test(title);
-        const isSaeuleExt = /^(Ovale|Konische) Holzsäule aus Stäbchenholz/i.test(title);
+        // NOTE: must also match the renamed 'Konische Holzsäule aus Eichenholz'
+        // (2026-08-31 rename broke this — the column then got the default 90°
+        // rotation and stood ACROSS the table instead of along it).
+        const isSaeuleExt = /^(Ovale|Konische) Holzsäule/i.test(title);
         const isX_alignedSat = isButterflyExt || isHalbrundeExt || isSaeuleExt;
         const placements = isPair
           ? [{ x: -0.75, mirror: false }, { x: 0.75, mirror: true }]   // pair: second instance faces opposite
@@ -3151,7 +3172,12 @@ class TableConfigurator {
     const pf = window.__glbPrefetch;
     if (pf && pf.file && decodeURIComponent(url).includes(pf.file)) {
       window.__glbPrefetch = null;
-      return pf.promise.then((buf) => {
+      // Mobile safety (2026-08-31): the index.html prefetch fetch() has no
+      // timeout — on a flaky phone connection it can hang forever and the
+      // loader would never hide. Race it against 10 s, then fall back.
+      const raced = Promise.race([pf.promise,
+        new Promise((_, rej) => setTimeout(() => rej(new Error('prefetch timeout')), 10000))]);
+      return raced.then((buf) => {
         if (!buf) throw new Error('prefetch failed');
         return new Promise((res, rej) => this.loader.parse(buf, '', res, rej));
       }).catch(() => this.loadGLTF(url, opts)); // fall back to a normal load
@@ -6182,6 +6208,7 @@ class TableConfigurator {
     }
   }
   hideLoader() {
+    clearTimeout(this._bootWatchdog);
     document.getElementById('loader').classList.add('hidden');
     document.getElementById('mini-loader').classList.add('hidden');
     this._initialLoadDone = true;
