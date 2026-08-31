@@ -5,7 +5,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { USDZExporter } from 'three/addons/exporters/USDZExporter.js';
-import { TABLE_SHAPES, MATERIAL_TYPES, EDGE_OPTIONS, POWDER_COAT_COLORS, DEFAULT_STATE, BUILD_VERSION } from './config.js?v=2da8f153';
+import { TABLE_SHAPES, MATERIAL_TYPES, EDGE_OPTIONS, POWDER_COAT_COLORS, DEFAULT_STATE, BUILD_VERSION } from './config.js?v=b7e3c9a1';
 
 // ─── Zaza Woods Untergestell whitelist (user-supplied 2026-06-19) ───
 // model = { name, isWood }  → green card, clicking loads 3D model
@@ -251,7 +251,7 @@ function findBaseVariant(product, shape, state) {
   return product.baseVariants.find(v => (v.opt1||'').startsWith(lenPrefix)) || product.baseVariants[0];
 }
 
-import { fetchAllPrices, formatPrice, getCachedTotal, setCachedTotal } from './shopify.js?v=2da8f153';
+import { fetchAllPrices, formatPrice, getCachedTotal, setCachedTotal } from './shopify.js?v=b7e3c9a1';
 
 class TableConfigurator {
   constructor() {
@@ -4549,7 +4549,10 @@ class TableConfigurator {
         // at every size, vertices vs tabletop hull): at 200cm the new metal
         // legs poke past the asymmetric rim (Doppel V 5.0cm, Felix 2.4cm,
         // Butterfly Satz 2.4cm) -> hidden at 200 only; clean from 220 up.
-        200: ORGANIC_ALL.concat(['A Tischgestell (Satz)', 'Doppel V-Tischgestell', 'Felix Tischgestell', 'Butterfly Tischgestell (Satz)']),
+        // Audit 2026-08-31 (corrected hull sampling): the standalone Ovale
+        // Holzsäule (external GLB, wide oval foot) pokes 3.8cm past the rim at
+        // 200 as well -> hidden at 200 only.
+        200: ORGANIC_ALL.concat(['A Tischgestell (Satz)', 'Doppel V-Tischgestell', 'Felix Tischgestell', 'Butterfly Tischgestell (Satz)', 'Ovale Holzsäule aus Stäbchenholz, Eiche']),
         220: ORGANIC_ALL.concat(['A Tischgestell (Satz)']),
         240: ORGANIC_ALL.concat(['A Tischgestell (Satz)']),
         260: ORGANIC_ALL.concat(['A Tischgestell (Satz)']),
