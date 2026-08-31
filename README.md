@@ -2,8 +2,10 @@
 
 3D-Esstisch-Konfigurator für den **deutschen** Shop **zazawoods.de** (Shopify-Store
 `zazawood.myshopify.com`, Admin: admin.shopify.com/store/zazawood).
-Ein separater NL-Klon für zazawoods.nl ist geplant (eigenes Repo + eigenes
-Railway-Projekt) — dieses Repo bleibt ausschließlich DE.
+Der NL-Klon für zazawoods.nl lebt in `zazawoods/zazawoods-eettafel-configurator-nl`
+(eigenes Railway-Projekt `zazawoods-configurator-nl`) — dieses Repo bleibt
+ausschließlich DE. Engine-Änderungen hier machen und in den NL-Klon portieren
+(dort nur `locale.js`, `config.js`, `index.html`, Produktdaten anders).
 
 **Wer hier arbeitet (Mensch oder KI-Agent): erst diese Datei + das neueste
 `HANDOFF/HANDOFF_*.md` lesen.**
