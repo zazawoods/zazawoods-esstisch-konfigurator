@@ -39,6 +39,29 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
+// Client diagnostics (mobile black-screen hunt): phones beacon lifecycle
+// events here; the last 500 land in an in-memory ring buffer, readable via
+// GET /api/clientlog. Ephemeral by design (resets on deploy), no PII.
+const CLIENT_LOG = [];
+app.post('/api/clientlog', (req, res) => {
+  let size = 0;
+  const chunks = [];
+  req.on('data', (c) => { size += c.length; if (size > 16384) { req.destroy(); return; } chunks.push(c); });
+  req.on('end', () => {
+    try {
+      const msg = Buffer.concat(chunks).toString('utf8').slice(0, 8000);
+      CLIENT_LOG.push({ at: new Date().toISOString(), msg });
+      if (CLIENT_LOG.length > 500) CLIENT_LOG.splice(0, CLIENT_LOG.length - 500);
+    } catch (e) { /* ignore */ }
+    res.status(204).end();
+  });
+  req.on('error', () => { try { res.status(204).end(); } catch (e) {} });
+});
+app.get('/api/clientlog', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json(CLIENT_LOG.slice(-300));
+});
+
 // Security & embedding headers for all other routes
 app.use((req, res, next) => {
   if (!req.path.startsWith('/api')) {
