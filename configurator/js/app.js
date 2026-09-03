@@ -5,7 +5,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { USDZExporter } from 'three/addons/exporters/USDZExporter.js';
-import { TABLE_SHAPES, MATERIAL_TYPES, EDGE_OPTIONS, POWDER_COAT_COLORS, DEFAULT_STATE, BUILD_VERSION } from './config.js?v=d5f8a9b2';
+import { TABLE_SHAPES, MATERIAL_TYPES, EDGE_OPTIONS, POWDER_COAT_COLORS, DEFAULT_STATE, BUILD_VERSION } from './config.js?v=a8c4e2f6';
 
 // ─── Zaza Woods Untergestell whitelist (user-supplied 2026-06-19) ───
 // model = { name, isWood }  → green card, clicking loads 3D model
@@ -251,7 +251,7 @@ function findBaseVariant(product, shape, state) {
   return product.baseVariants.find(v => (v.opt1||'').startsWith(lenPrefix)) || product.baseVariants[0];
 }
 
-import { fetchAllPrices, formatPrice, getCachedTotal, setCachedTotal } from './shopify.js?v=d5f8a9b2';
+import { fetchAllPrices, formatPrice, getCachedTotal, setCachedTotal } from './shopify.js?v=a8c4e2f6';
 
 class TableConfigurator {
   constructor() {
@@ -529,9 +529,16 @@ class TableConfigurator {
       document.getElementById('mini-loader')?.classList.remove('hidden');
       clearTimeout(this._ctxLostTimer);
       this._ctxLostTimer = setTimeout(() => {
+        // Next boot renders in lite mode (DPR 1, no AA/shadows/warmers) so the
+        // recovery reload actually survives on low-memory phone GPUs.
+        try { sessionStorage.setItem('zw_gpu_lite', '1'); } catch (e) {}
         let last = 0;
         try { last = parseInt(sessionStorage.getItem('zw_ctx_reload') || '0', 10); } catch (e) {}
-        if (Date.now() - last < 90000) { console.warn('[ZW] context not restored, reload suppressed (loop guard)'); return; }
+        if (Date.now() - last < 90000) {
+          console.warn('[ZW] context not restored, reload suppressed (loop guard)');
+          this._showGpuFailOverlay();
+          return;
+        }
         try { sessionStorage.setItem('zw_ctx_reload', String(Date.now())); } catch (e) {}
         location.reload();
       }, 4000);
@@ -541,6 +548,26 @@ class TableConfigurator {
       clearTimeout(this._ctxLostTimer);
       document.getElementById('mini-loader')?.classList.add('hidden');
     }, false);
+  }
+
+  // Shown instead of a silently black canvas when even the lite-mode reload
+  // could not keep the WebGL context alive.
+  _showGpuFailOverlay() {
+    if (document.getElementById('zw-gpu-fail')) return;
+    document.getElementById('loader')?.classList.add('hidden');
+    document.getElementById('mini-loader')?.classList.add('hidden');
+    const viewer = document.getElementById('viewer') || document.body;
+    const ov = document.createElement('div');
+    ov.id = 'zw-gpu-fail';
+    ov.style.cssText = 'position:absolute;inset:0;z-index:50;background:#f5f4f2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;font-family:Inter,-apple-system,sans-serif;';
+    ov.innerHTML =
+      '<div style="font-size:15px;color:#555;max-width:300px;">Die 3D-Ansicht wurde von Ihrem Gerät gestoppt (zu wenig Grafikspeicher). Bitte schließen Sie andere Tabs und laden Sie die Seite neu.</div>' +
+      '<button id="zw-gpu-fail-btn" style="background:#577476;color:#fff;border:0;border-radius:8px;padding:12px 32px;font-size:15px;cursor:pointer;">Seite neu laden</button>';
+    viewer.appendChild(ov);
+    document.getElementById('zw-gpu-fail-btn')?.addEventListener('click', () => {
+      try { sessionStorage.setItem('zw_ctx_reload', '0'); } catch (e) {}
+      location.reload();
+    });
   }
 
   // ─── Scene Setup ──────────────────────────────
@@ -601,11 +628,26 @@ class TableConfigurator {
     );
     this.camera.position.set(4.0, 0.55, 5.5);
 
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+    // Mobile GPU diet (2026-09: Pixel & Co. lost the WebGL context after the
+    // first load — black canvas). Phones get: no MSAA (biggest win on
+    // Mali/Adreno), pixel ratio capped at 1.5 instead of 2, cheaper shadow
+    // filter. If the context was ever lost this session (zw_gpu_lite flag,
+    // set in _installContextLossGuard before the recovery reload), boot in
+    // lite mode: DPR 1, no antialias, no shadows, no background warmers.
+    const isMobileGPU = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    this._isMobileGPU = isMobileGPU;
+    let gpuLite = false;
+    try { gpuLite = sessionStorage.getItem('zw_gpu_lite') === '1'; } catch (e) {}
+    this._gpuLite = gpuLite;
+    if (gpuLite) console.warn('[ZW] booting in GPU lite mode (previous context loss)');
+    this.renderer = new THREE.WebGLRenderer({
+      canvas, antialias: !(isMobileGPU || gpuLite), alpha: false,
+      powerPreference: 'high-performance'
+    });
     this.renderer.setSize(viewer.clientWidth, viewer.clientHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.setPixelRatio(gpuLite ? 1 : Math.min(window.devicePixelRatio, isMobileGPU ? 1.5 : 2));
+    this.renderer.shadowMap.enabled = !gpuLite;
+    this.renderer.shadowMap.type = isMobileGPU ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.2;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -6215,10 +6257,15 @@ class TableConfigurator {
     // Warm the texture cache once the first model is on screen.
     if (!this._prefetchStarted) {
       this._prefetchStarted = true;
+      // Lite mode after a context loss: no background warmers at all — every
+      // byte of GPU/CPU headroom goes to keeping the one visible table alive.
+      if (this._gpuLite) return;
       const idle = window.requestIdleCallback || ((f) => setTimeout(f, 2500));
       idle(() => this._prefetchOakTextures());
       setTimeout(() => this._prefetchShapeGLBs(), 6000);
-      setTimeout(() => this._scheduleARPrep(), 8000);
+      // Phones: AR export (GLTFExporter + texture readback) is the biggest
+      // post-load memory spike — give the GPU more breathing room first.
+      setTimeout(() => this._scheduleARPrep(), this._isMobileGPU ? 15000 : 8000);
     }
   }
 
